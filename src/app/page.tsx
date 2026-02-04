@@ -5,9 +5,9 @@ import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
 import { Github, Instagram, Mail, FileText, ArrowRight, Image as ImageIcon, Linkedin, Menu, X } from 'lucide-react';
 
 /**
- * THE ARCHITECTURAL SEQUENCE v42.4
+ * THE ARCHITECTURAL SEQUENCE v42.5
  * Theme: "Cinematic Control Interface"
- * Focus: Fixed TypeScript Build Errors (Explicit Types).
+ * Focus: Fixed TypeScript Build Errors (Explicit Types for Deployment).
  */
 
 // --- Utilities ---
@@ -86,7 +86,6 @@ const TopographicWaves = () => {
 // --- Components ---
 
 const GrainOverlay = () => (
-  // Changed from fixed to absolute so it stays within the Home section
   <div className="absolute inset-0 z-[20] pointer-events-none opacity-[0.03] contrast-150 brightness-100">
     <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
       <filter id="noise">
@@ -268,7 +267,7 @@ export default function App() {
           <a href="https://github.com/flynnmaxweld" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="text-white hover:text-zinc-300 transition-all transform hover:scale-110">
             <Github size={22} fill="currentColor" strokeWidth={0} />
           </a>
-          {/* UPDATED RESUME LINK: Points to public/resume.pdf */}
+          {/* Resume Link */}
           <a href="/resume.pdf" target="_blank" rel="noopener noreferrer" aria-label="Resume" className="text-white hover:text-zinc-300 transition-all transform hover:scale-110">
             <FileText size={22} fill="currentColor" stroke="#050505" strokeWidth={2} />
           </a>
