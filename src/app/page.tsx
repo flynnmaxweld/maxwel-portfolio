@@ -5,14 +5,14 @@ import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
 import { Github, Instagram, Mail, FileText, ArrowRight, Image as ImageIcon, Linkedin, Menu, X } from 'lucide-react';
 
 /**
- * THE ARCHITECTURAL SEQUENCE v42.3
+ * THE ARCHITECTURAL SEQUENCE v42.4
  * Theme: "Cinematic Control Interface"
- * Focus: Added Resume Link Configuration.
+ * Focus: Fixed TypeScript Build Errors (Explicit Types).
  */
 
 // --- Utilities ---
 
-const scrollToId = (id) => {
+const scrollToId = (id: string) => {
   const el = document.getElementById(id);
   if (el) el.scrollIntoView({ behavior: 'smooth' });
 };
@@ -20,20 +20,22 @@ const scrollToId = (id) => {
 // --- Background: Topographic Waves ---
 
 const TopographicWaves = () => {
-  const canvasRef = useRef(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    let animationFrameId;
+    if (!ctx) return;
+    
+    let animationFrameId: number;
 
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     };
 
-    const lines = [];
+    const lines: { y: number; offset: number; speed: number }[] = [];
     const lineCount = 45;
     const segmentCount = 100;
 
@@ -47,7 +49,7 @@ const TopographicWaves = () => {
       }
     };
 
-    const draw = (time) => {
+    const draw = (time: number) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
       ctx.lineWidth = 0.8;
@@ -95,7 +97,7 @@ const GrainOverlay = () => (
   </div>
 );
 
-const Section = ({ id, children, className = "" }) => (
+const Section = ({ id, children, className = "" }: { id: string, children: React.ReactNode, className?: string }) => (
   <section id={id} className={`min-h-screen w-full flex flex-col justify-center py-40 relative z-10 ${className}`}>
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -108,13 +110,13 @@ const Section = ({ id, children, className = "" }) => (
   </section>
 );
 
-const TechTag = ({ text }) => (
+const TechTag = ({ text }: { text: string }) => (
   <span className="px-4 py-2 bg-zinc-900/30 border border-zinc-800/40 text-[11px] font-sans font-medium text-zinc-400 uppercase tracking-wide hover:border-zinc-500 hover:text-white transition-all cursor-default rounded-full">
     {text}
   </span>
 );
 
-const SectionLabel = ({ number, text }) => (
+const SectionLabel = ({ number, text }: { number: string, text: string }) => (
   <div className="flex items-center gap-4 mb-16">
     <span className="font-mono text-[10px] text-zinc-600 tracking-tighter">[{number}]</span>
     <div className="h-[0.5px] w-12 bg-zinc-800" />
@@ -147,7 +149,7 @@ const Navbar = () => {
 
   const navLinks = ['About', 'Projects', 'Contact'];
 
-  const handleNavClick = (id) => {
+  const handleNavClick = (id: string) => {
     setMobileMenuOpen(false);
     scrollToId(id.toLowerCase());
   };
@@ -345,6 +347,7 @@ export default function App() {
                 solution: "Engineered an event-driven desktop daemon using Python watchdog libraries. Automates real-time sorting and classification, reducing digital clutter by ~40% with near-zero latency.",
                 tags: ["Python", "Watchdog API", "Event-Driven"],
                 link: "View Source",
+                // Placeholder image path - replace with your actual file path e.g. "/smart-file.png"
                 image: "/project-1.jpg" 
               },
               {
