@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", serif;
+}
+
+/* Base styles to ensure the background is always deep obsidian */
+@layer base {
+  body {
+    @apply bg-[#050505] text-zinc-100 antialiased;
+  }
+}
