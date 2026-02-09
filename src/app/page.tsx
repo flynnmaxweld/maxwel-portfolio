@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
 import { Github, Instagram, Mail, FileText, ArrowRight, Image as ImageIcon, Linkedin, Menu, X, ArrowUpRight } from 'lucide-react';
