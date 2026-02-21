@@ -19,7 +19,7 @@ import { Github, Mail, FileText, ArrowRight, Image as ImageIcon, Linkedin, Menu,
  */
 
 // --- Utilities ---
-const scrollToId = (id) => {
+const scrollToId = (id: string) => {
   const el = document.getElementById(id);
   if (el) el.scrollIntoView({ behavior: 'smooth' });
 };
