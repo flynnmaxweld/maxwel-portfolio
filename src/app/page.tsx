@@ -5,8 +5,12 @@ import { motion, useScroll, useSpring, AnimatePresence, useMotionValue, useTrans
 import { Github, Mail, FileText, ArrowRight, Image as ImageIcon, Linkedin, Menu, X, ArrowUpRight, User, Terminal, Database, ChevronUp } from 'lucide-react';
 
 /**
- * FLYNN MAXWEL D - PORTFOLIO v70.0 (TypeScript Edition)
- * Restored original Hero Typography while maintaining strict types.
+ * FLYNN MAXWEL D - PORTFOLIO v78.0 (Strict TypeScript & Fixed Image Logic)
+ * * FIXES APPLIED:
+ * 1. Resolved 'segmentCount' ReferenceError in animation loop.
+ * 2. Full TypeScript type definitions for all parameters and DOM refs.
+ * 3. SmartImage logic updated to prevent overlapping/ghosting icons.
+ * 4. Restored Hero typography scale and leading from requested version.
  */
 
 // --- Interfaces ---
@@ -59,7 +63,7 @@ const Preloader: React.FC<PreloaderProps> = ({ onDone }) => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex flex-col items-center gap-4"
+        className="flex flex-col items-center gap-4 px-6 text-center"
       >
         <span className="font-brand font-black text-xl text-white tracking-tighter uppercase">FLYNN MAXWEL D</span>
         <div className="w-32 h-[1px] bg-white/10 relative overflow-hidden">
@@ -131,8 +135,7 @@ const TopographicWaves: React.FC = () => {
     if (!ctx) return;
 
     let animationFrameId: number;
-    const isMobile = () => window.innerWidth < 768;
-
+    
     interface Line {
       y: number;
       offset: number;
@@ -148,8 +151,9 @@ const TopographicWaves: React.FC = () => {
     };
 
     const buildLines = () => {
+      const isMobile = window.innerWidth < 768;
       lines.length = 0;
-      const count = isMobile() ? 20 : 40;
+      const count = isMobile ? 20 : 40;
       for (let i = 0; i < count; i++) {
         lines.push({
           y: (canvas.height / count) * i,
@@ -161,7 +165,9 @@ const TopographicWaves: React.FC = () => {
     };
 
     const draw = (time: number) => {
-      const segCount = isMobile() ? 40 : 80;
+      // FIX: Ensure segmentCount is defined inside or accessible to the scope
+      const segmentCount = window.innerWidth < 768 ? 40 : 80;
+      
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
       ctx.lineWidth = 0.8;
@@ -181,12 +187,9 @@ const TopographicWaves: React.FC = () => {
       animationFrameId = requestAnimationFrame(draw);
     };
 
-    let segmentCount = isMobile() ? 40 : 80;
-
     window.addEventListener('resize', () => { 
       resize(); 
       buildLines();
-      segmentCount = isMobile() ? 40 : 80;
     });
     
     resize();
@@ -202,28 +205,32 @@ const TopographicWaves: React.FC = () => {
   return <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none bg-[#020202]" />;
 };
 
-// --- Smart Image ---
+// --- Smart Image (Ghosting Fix) ---
 const SmartImage: React.FC<SmartImageProps> = ({ src, alt, className, fallbackIcon: FallbackIcon }) => {
   const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-zinc-900/50">
+    <div className="relative w-full h-full overflow-hidden bg-zinc-900/50 flex items-center justify-center">
+      {/* GHOSTING FIX: The fallback icon and status indicator only appear 
+        if the image hasn't loaded or encountered an error. 
+      */}
       {status === 'error' ? (
-        <div className="absolute inset-0 flex items-center justify-center text-zinc-800">
+        <div className="absolute inset-0 flex items-center justify-center text-zinc-800 bg-zinc-900">
           {FallbackIcon ? <FallbackIcon size={80} strokeWidth={0.1} /> : <ImageIcon size={48} strokeWidth={0.5} />}
         </div>
-      ) : (
-        <img 
-          src={src} 
-          alt={alt} 
-          className={`${className} transition-opacity duration-1000 ${status === 'loaded' ? 'opacity-100' : 'opacity-0'}`}
-          onLoad={() => setStatus('loaded')}
-          onError={() => setStatus('error')} 
-        />
-      )}
-      {status === 'loading' && (
-         <div className="absolute inset-0 bg-zinc-900 animate-pulse" />
-      )}
+      ) : status === 'loading' ? (
+         <div className="absolute inset-0 bg-zinc-900 animate-pulse flex items-center justify-center text-zinc-800">
+           {FallbackIcon && <FallbackIcon size={80} strokeWidth={0.1} />}
+         </div>
+      ) : null}
+
+      <img 
+        src={src} 
+        alt={alt} 
+        className={`${className} transition-opacity duration-1000 ${status === 'loaded' ? 'opacity-100' : 'opacity-0'}`}
+        onLoad={() => setStatus('loaded')}
+        onError={() => setStatus('error')} 
+      />
     </div>
   );
 };
@@ -260,7 +267,7 @@ const ProjectCard: React.FC<{ p: Project; i: number }> = ({ p, i }) => {
         <SmartImage 
           src={`/project-${p.id}.jpg`} 
           alt={p.title} 
-          className="w-full h-full object-cover transition-all duration-700" 
+          className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all duration-700" 
           fallbackIcon={p.icon} 
         />
         <div className="absolute inset-0 p-8 flex flex-col justify-between pointer-events-none">
@@ -269,7 +276,7 @@ const ProjectCard: React.FC<{ p: Project; i: number }> = ({ p, i }) => {
               {p.header}
             </span>
             {p.url && (
-              <a href={p.url} target="_blank" className="p-3 bg-white text-black rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300">
+              <a href={p.url} target="_blank" rel="noopener noreferrer" className="p-3 bg-white text-black rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300">
                 <ArrowUpRight size={18} />
               </a>
             )}
@@ -324,13 +331,13 @@ const Navbar: React.FC<NavProps> = ({ activeSection }) => {
             </div>
             <div className="h-4 w-[1px] bg-zinc-800" />
             <div className="flex items-center gap-5 text-zinc-500">
-              <a href="/resume.pdf" target="_blank" className="hover:text-white transition-colors" title="Resume"><FileText size={16} /></a>
-              <a href="https://linkedin.com/in/flynn-maxwel/" target="_blank" className="hover:text-white transition-colors"><Linkedin size={16} /></a>
-              <a href="https://github.com/flynnmaxweld" target="_blank" className="hover:text-white transition-colors"><Github size={16} /></a>
+              <a href="/resume.pdf" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" title="Resume"><FileText size={16} /></a>
+              <a href="https://linkedin.com/in/flynn-maxwel/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors"><Linkedin size={16} /></a>
+              <a href="https://github.com/flynnmaxweld" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors"><Github size={16} /></a>
             </div>
           </div>
 
-          <button className="md:hidden text-white z-[110]" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <button className="md:hidden text-white z-[110] p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -398,7 +405,7 @@ export default function App() {
   return (
     <div className="bg-[#020202] text-white min-h-screen selection:bg-white selection:text-black antialiased overflow-x-hidden md:cursor-none">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@200;400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@200;400&display=swap');
         html { scroll-behavior: smooth; }
         .font-sans  { font-family: 'Inter', sans-serif; }
         .font-serif { font-family: 'Cormorant Garamond', serif; }
@@ -417,20 +424,20 @@ export default function App() {
           <Navbar activeSection={activeSection} />
 
           <main className="relative z-10 w-full">
-            {/* HERO - RESTORED TYPOGRAPHY */}
+            {/* HERO - RESTORED TYPOGRAPHY PER SCREENSHOT */}
             <section id="home" className="h-[100svh] w-full relative flex flex-col justify-center items-center overflow-hidden">
               <TopographicWaves />
               <div className="text-center max-w-5xl relative z-10 px-6">
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}>
                   
-                  {/* Restored Original Subtitle Styling */}
+                  {/* Original Subtitle Styling */}
                   <h2 className="text-3xl md:text-5xl font-serif italic text-zinc-400 font-light tracking-wide leading-tight mb-4">
                     Learning how systems work.
                   </h2>
                   
-                  {/* Restored Original Main Title Size and Spacing */}
+                  {/* Original Main Title Styling */}
                   <h1 className="text-5xl sm:text-7xl md:text-[7.5rem] font-serif font-medium text-white leading-[0.9] tracking-tight">
-                    Designing how <br /> they <span className="italic">feel</span>.
+                    Designing how <br /> they feel.
                   </h1>
 
                   <button onClick={() => scrollToId('about')} className="mt-20 flex flex-col items-center gap-4 mx-auto group">
@@ -447,6 +454,7 @@ export default function App() {
                 <div className="md:col-span-5 flex justify-center">
                    <div className="relative group w-full max-w-[340px]">
                       <div className="aspect-square bg-zinc-950 border border-white/5 rounded-full overflow-hidden relative shadow-2xl transition-all duration-1000 group-hover:border-white/20">
+                         {/* Corrected logic to prevent fallback icon overlapping face */}
                          <SmartImage src="/max.jpg" alt="Flynn" className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" fallbackIcon={User} />
                          <div className="absolute inset-0 bg-gradient-to-t from-[#020202]/60 via-transparent to-transparent pointer-events-none" />
                       </div>
@@ -466,7 +474,7 @@ export default function App() {
                    
                    <div className="pt-12 border-t border-zinc-900 grid grid-cols-1 sm:grid-cols-3 gap-8">
                       <div>
-                         <span className="font-mono text-[10px] text-zinc-600 uppercase mb-5 block tracking-widest">🧠 Logic</span>
+                         <span className="font-mono text-[10px] text-zinc-600 uppercase mb-5 block tracking-widest">🧠 Logic Layer</span>
                          <div className="flex flex-wrap gap-2">{['Java', 'Python', 'C', 'JavaScript'].map(s => <span key={s} className="px-3 py-1 bg-white/5 border border-white/10 text-[10px] font-mono rounded-full">{s}</span>)}</div>
                       </div>
                       <div>
@@ -474,7 +482,7 @@ export default function App() {
                          <div className="flex flex-wrap gap-2">{['HTML', 'CSS', 'React', 'Tailwind'].map(s => <span key={s} className="px-3 py-1 bg-white/5 border border-white/10 text-[10px] font-mono rounded-full">{s}</span>)}</div>
                       </div>
                       <div>
-                         <span className="font-mono text-[10px] text-zinc-600 uppercase mb-5 block tracking-widest">⚙ Core</span>
+                         <span className="font-mono text-[10px] text-zinc-600 uppercase mb-5 block tracking-widest">⚙ Core Systems</span>
                          <div className="flex flex-wrap gap-2">{['Git', 'DSA', 'SQL'].map(s => <span key={s} className="px-3 py-1 bg-white/5 border border-white/10 text-[10px] font-mono rounded-full">{s}</span>)}</div>
                       </div>
                    </div>
