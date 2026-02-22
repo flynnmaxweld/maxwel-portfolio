@@ -5,12 +5,8 @@ import { motion, useScroll, useSpring, AnimatePresence, useMotionValue, useTrans
 import { Github, Mail, FileText, ArrowRight, Image as ImageIcon, Linkedin, Menu, X, ArrowUpRight, User, Terminal, Database, ChevronUp } from 'lucide-react';
 
 /**
- * FLYNN MAXWEL D - PORTFOLIO v78.0 (Strict TypeScript & Fixed Image Logic)
- * * FIXES APPLIED:
- * 1. Resolved 'segmentCount' ReferenceError in animation loop.
- * 2. Full TypeScript type definitions for all parameters and DOM refs.
- * 3. SmartImage logic updated to prevent overlapping/ghosting icons.
- * 4. Restored Hero typography scale and leading from requested version.
+ * FLYNN MAXWEL D - PORTFOLIO v80.0
+ * Fixed: Locked Hero Typography & Minimalist Circular Profile Frame
  */
 
 // --- Interfaces ---
@@ -153,7 +149,7 @@ const TopographicWaves: React.FC = () => {
     const buildLines = () => {
       const isMobile = window.innerWidth < 768;
       lines.length = 0;
-      const count = isMobile ? 20 : 40;
+      const count = isMobile() ? 20 : 40;
       for (let i = 0; i < count; i++) {
         lines.push({
           y: (canvas.height / count) * i,
@@ -165,9 +161,7 @@ const TopographicWaves: React.FC = () => {
     };
 
     const draw = (time: number) => {
-      // FIX: Ensure segmentCount is defined inside or accessible to the scope
       const segmentCount = window.innerWidth < 768 ? 40 : 80;
-      
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
       ctx.lineWidth = 0.8;
@@ -187,15 +181,10 @@ const TopographicWaves: React.FC = () => {
       animationFrameId = requestAnimationFrame(draw);
     };
 
-    window.addEventListener('resize', () => { 
-      resize(); 
-      buildLines();
-    });
-    
+    window.addEventListener('resize', () => { resize(); buildLines(); });
     resize();
     buildLines();
     animationFrameId = requestAnimationFrame(draw);
-
     return () => {
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(animationFrameId);
@@ -205,15 +194,12 @@ const TopographicWaves: React.FC = () => {
   return <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none bg-[#020202]" />;
 };
 
-// --- Smart Image (Ghosting Fix) ---
+// --- Smart Image ---
 const SmartImage: React.FC<SmartImageProps> = ({ src, alt, className, fallbackIcon: FallbackIcon }) => {
   const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-zinc-900/50 flex items-center justify-center">
-      {/* GHOSTING FIX: The fallback icon and status indicator only appear 
-        if the image hasn't loaded or encountered an error. 
-      */}
       {status === 'error' ? (
         <div className="absolute inset-0 flex items-center justify-center text-zinc-800 bg-zinc-900">
           {FallbackIcon ? <FallbackIcon size={80} strokeWidth={0.1} /> : <ImageIcon size={48} strokeWidth={0.5} />}
@@ -331,9 +317,9 @@ const Navbar: React.FC<NavProps> = ({ activeSection }) => {
             </div>
             <div className="h-4 w-[1px] bg-zinc-800" />
             <div className="flex items-center gap-5 text-zinc-500">
-              <a href="/resume.pdf" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" title="Resume"><FileText size={16} /></a>
-              <a href="https://linkedin.com/in/flynn-maxwel/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors"><Linkedin size={16} /></a>
-              <a href="https://github.com/flynnmaxweld" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors"><Github size={16} /></a>
+              <a href="/resume.pdf" target="_blank" className="hover:text-white transition-colors" title="Resume"><FileText size={16} /></a>
+              <a href="https://linkedin.com/in/flynn-maxwel/" target="_blank" className="hover:text-white transition-colors"><Linkedin size={16} /></a>
+              <a href="https://github.com/flynnmaxweld" target="_blank" className="hover:text-white transition-colors"><Github size={16} /></a>
             </div>
           </div>
 
@@ -405,7 +391,7 @@ export default function App() {
   return (
     <div className="bg-[#020202] text-white min-h-screen selection:bg-white selection:text-black antialiased overflow-x-hidden md:cursor-none">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@200;400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@200;400&display=swap');
         html { scroll-behavior: smooth; }
         .font-sans  { font-family: 'Inter', sans-serif; }
         .font-serif { font-family: 'Cormorant Garamond', serif; }
@@ -424,10 +410,10 @@ export default function App() {
           <Navbar activeSection={activeSection} />
 
           <main className="relative z-10 w-full">
-            {/* HERO - RESTORED TYPOGRAPHY PER SCREENSHOT */}
+            {/* HERO - RESTORED GRAND TYPOGRAPHY */}
             <section id="home" className="h-[100svh] w-full relative flex flex-col justify-center items-center overflow-hidden">
               <TopographicWaves />
-              <div className="text-center max-w-5xl relative z-10 px-6">
+              <div className="text-center max-w-5xl relative z-10 px-6 uppercase">
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}>
                   
                   {/* Original Subtitle Styling */}
@@ -448,17 +434,24 @@ export default function App() {
               </div>
             </section>
 
-            {/* IDENTITY */}
+            {/* IDENTITY - RESTORED MINIMALIST CIRCULAR FRAME */}
             <section id="about" className="min-h-screen py-32 px-6 md:px-24 flex flex-col justify-center">
               <div className="max-w-6xl mx-auto grid md:grid-cols-12 gap-16 items-start">
                 <div className="md:col-span-5 flex justify-center">
-                   <div className="relative group w-full max-w-[340px]">
-                      <div className="aspect-square bg-zinc-950 border border-white/5 rounded-full overflow-hidden relative shadow-2xl transition-all duration-1000 group-hover:border-white/20">
-                         {/* Corrected logic to prevent fallback icon overlapping face */}
-                         <SmartImage src="/max.jpg" alt="Flynn" className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" fallbackIcon={User} />
-                         <div className="absolute inset-0 bg-gradient-to-t from-[#020202]/60 via-transparent to-transparent pointer-events-none" />
+                   
+                   {/* MINIMALIST CIRCULAR FRAME */}
+                   <div className="relative group w-full max-w-[320px]">
+                      <div className="aspect-square bg-zinc-950 border border-white/10 rounded-full overflow-hidden relative shadow-2xl transition-all duration-1000 hover:border-white/30">
+                         <SmartImage 
+                           src="/max.jpg" 
+                           alt="Flynn Maxwel D" 
+                           className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
+                           fallbackIcon={User} 
+                         />
+                         <div className="absolute inset-0 bg-gradient-to-t from-[#020202]/40 via-transparent to-transparent pointer-events-none" />
                       </div>
                    </div>
+
                 </div>
                 <div className="md:col-span-7 space-y-12">
                    <div className="flex items-center gap-4">
