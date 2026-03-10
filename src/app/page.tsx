@@ -377,7 +377,7 @@ ScrollProgress.displayName = 'ScrollProgress';
 const Particles = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouse = useRef({ x: -9999, y: -9999 });
-  const animationFrame = useRef<number>();
+  const animationFrame = useRef<number>(0);
   const reduced = usePrefersReducedMotion();
   const isTouch = useIsTouchDevice();
   const [isVisible, setIsVisible] = useState(true);
