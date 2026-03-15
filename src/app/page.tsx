@@ -1,92 +1,95 @@
 "use client";
-
 import React, {
-  useState, useEffect, useRef, useCallback, useMemo, memo,
-  type ElementType, type CSSProperties,
+  useState, useEffect, useRef, memo, useCallback,
 } from 'react';
 import {
   motion, useScroll, useSpring, AnimatePresence,
   useMotionValue, useTransform, useInView,
 } from 'framer-motion';
 import {
-  Github, FileText, ArrowRight, Linkedin, Menu, X,
-  ArrowUpRight, User, Terminal, Database, ChevronUp, ImageOff, Mail,
+  Linkedin, Menu, X, ArrowUpRight, ArrowRight, Moon, Sun,
+  Layers, Smartphone, Monitor, Feather, ImageOff, Mail
 } from 'lucide-react';
 
-/* ----------------------------------------------------------------------------
-   THEME & CONSTANTS
----------------------------------------------------------------------------- */
+/* ============================================================================
+   THEME & CONSTANTS - LUXURY UI/UX EDITORIAL WITH LIGHT MODE
+============================================================================ */
 const F = {
-  display: `'Cormorant Garamond', Georgia, serif`,
-  brand:   `'Montserrat', 'Arial Black', sans-serif`,
-  body:    `'DM Sans', system-ui, sans-serif`,
-  mono:    `'JetBrains Mono', 'Courier New', monospace`,
+  display: `'Playfair Display', serif`,
+  sans: `'Inter', sans-serif`,
 } as const;
 
-const C = {
-  bg:        '#111318',
-  surface:   '#191c24',
-  card:      '#1e222c',
-  gold:      '#d4a84b',
-  goldLight: '#e8c878',
-  goldDim:   'rgba(212,168,75,0.13)',
-  ivory:     '#f2ede4',
-  text:      '#c4beb4',
-  muted:     '#7a7568',
-  border:    'rgba(212,168,75,0.18)',
-  borderHov: 'rgba(212,168,75,0.45)',
+const THEMES = {
+  dark: {
+    bg: '#030303',
+    surface: '#0A0A0A',
+    card: '#111111',
+    text: '#F5F5F7',
+    muted: '#8A8A93',
+    border: 'rgba(255,255,255,0.1)',
+    accent: '#FFFFFF',
+    copper: '#E27244',
+  },
+  light: {
+    bg: '#FFFFFF',
+    surface: '#F5F5F7',
+    card: '#EBEBF0',
+    text: '#1A1A1A',
+    muted: '#666666',
+    border: 'rgba(0,0,0,0.1)',
+    accent: '#000000',
+    copper: '#D97545',
+  },
 } as const;
 
-const NAV_LINKS = ['About', 'Skills', 'Projects', 'Contact'] as const;
-const SOCIAL_LINKS = [
-  { href: '/resume.pdf', icon: FileText, label: 'Resume' },
-  { href: 'https://linkedin.com/in/flynn-maxwel/', icon: Linkedin, label: 'LinkedIn' },
-  { href: 'https://github.com/flynnmaxweld', icon: Github, label: 'GitHub' },
-] as const;
+const EASE = [0.16, 1, 0.3, 1];
+const NAV_LINKS = ['About', 'Expertise', 'Work', 'Contact'] as const;
 
 const SKILLS_DATA = [
-  { cat: 'Logic Layer',  icon: '🧠', items: [{ n: 'Python', l: 85 }, { n: 'Java', l: 75 }, { n: 'JavaScript', l: 80 }, { n: 'C', l: 65 }] },
-  { cat: 'Frontend',     icon: '🎨', items: [{ n: 'React', l: 80 }, { n: 'Tailwind CSS', l: 85 }, { n: 'HTML/CSS', l: 90 }, { n: 'Framer Motion', l: 70 }] },
-  { cat: 'Core Systems', icon: '⚙️', items: [{ n: 'Git', l: 80 }, { n: 'SQL', l: 70 }, { n: 'DSA', l: 75 }, { n: 'Linux', l: 65 }] },
+  {
+    cat: 'Languages',
+    icon: '⚡',
+    items: [{ n: 'Python', l: 85 }, { n: 'Java', l: 75 }, { n: 'JavaScript', l: 80 }, { n: 'C', l: 65 }]
+  },
+  {
+    cat: 'Frontend',
+    icon: '🎨',
+    items: [{ n: 'React', l: 80 }, { n: 'Tailwind CSS', l: 85 }, { n: 'HTML/CSS', l: 90 }, { n: 'Framer Motion', l: 70 }]
+  },
+  {
+    cat: 'Backend',
+    icon: '⚙️',
+    items: [{ n: 'Node.js', l: 75 }, { n: 'SQL', l: 70 }, { n: 'APIs', l: 80 }, { n: 'Firebase', l: 65 }]
+  },
 ] as const;
 
-const PROJECTS: Array<{
-  id: string;
-  displayId: string;
-  header: string;
-  title: string;
-  subtitle?: string;
-  desc: string;
-  tags: string[];
-  icon: ElementType;
-  url: string | null;
-}> = [
+const PROJECTS = [
   {
     id: '1',
-    displayId: '01',
-    header: 'Systems Automation',
     title: 'Smart File Organizer',
+    category: 'systems',
+    header: 'Systems Automation',
     desc: 'A headless Python daemon using event-driven architecture to classify and route digital assets based on content analysis and metadata.',
     tags: ['Python', 'OS Event Loop', 'Watchdog'],
-    icon: Database,
     url: 'https://github.com/flynnmaxweld/smart-file-organizer',
+    featured: true,
   },
   {
     id: '2',
-    displayId: '02',
-    header: 'Tactical Intelligence',
     title: 'A.R.I.S.',
+    category: 'ai',
     subtitle: 'Advance Response Intelligence System',
+    header: 'Tactical Intelligence',
     desc: 'Integrated threat modeling framework using LLMs to simulate complex system vulnerabilities and generate real-time mitigation strategies.',
     tags: ['Gemini AI', 'Logic Gates', 'React'],
-    icon: Terminal,
-    url: null,
+    url: '#',
+    featured: true,
   },
 ] as const;
 
-/* ----------------------------------------------------------------------------
+/* ============================================================================
    UTILITY HOOKS
----------------------------------------------------------------------------- */
+============================================================================ */
 const usePrefersReducedMotion = () => {
   const [matches, setMatches] = useState(false);
   useEffect(() => {
@@ -101,13 +104,35 @@ const usePrefersReducedMotion = () => {
 
 const useIsTouchDevice = () => {
   const [isTouch, setIsTouch] = useState(false);
-  useEffect(() => {
-    setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0);
-  }, []);
+  useEffect(() => setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0), []);
   return isTouch;
 };
 
-function throttle<T extends (...args: any[]) => any>(func: T, limit: number): T {
+const useTheme = () => {
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const stored = localStorage.getItem('theme');
+    const isDark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(isDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(t => {
+      const newTheme = t === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('theme', newTheme);
+      document.documentElement.setAttribute('data-theme', newTheme);
+      return newTheme;
+    });
+  }, []);
+
+  return { theme, mounted, toggleTheme, C: THEMES[theme] };
+};
+
+function throttle(func: any, limit: number) {
   let inThrottle: boolean;
   return function(this: any, ...args: any[]) {
     if (!inThrottle) {
@@ -115,166 +140,86 @@ function throttle<T extends (...args: any[]) => any>(func: T, limit: number): T 
       inThrottle = true;
       setTimeout(() => (inThrottle = false), limit);
     }
-  } as T;
+  };
 }
 
-/* ----------------------------------------------------------------------------
-   SCROLL UTILITY
----------------------------------------------------------------------------- */
 const scrollToId = (id: string) => {
   const el = document.getElementById(id);
   if (el) {
-    const y = el.getBoundingClientRect().top + window.scrollY - 80;
+    const y = el.getBoundingClientRect().top + window.scrollY - 100;
     window.scrollTo({ top: y, behavior: 'smooth' });
   }
 };
 
-/* ----------------------------------------------------------------------------
-   REUSABLE COMPONENTS
----------------------------------------------------------------------------- */
-
-const Noise = memo(() => (
-  <svg
-    className="fixed inset-0 w-full h-full pointer-events-none z-[500] opacity-[0.025]"
-    style={{ mixBlendMode: 'overlay' }}
-    aria-hidden="true"
-  >
-    <filter id="nz">
-      <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves={3} stitchTiles="stitch" />
-      <feColorMatrix type="saturate" values="0" />
-    </filter>
-    <rect width="100%" height="100%" filter="url(#nz)" />
-  </svg>
-));
-Noise.displayName = 'Noise';
-
-const Orbs = memo(() => (
+/* ============================================================================
+   AMBIENT GLOW
+============================================================================ */
+const AmbientGlow = memo(({ C }: { C: typeof THEMES.dark }) => (
   <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
-    <div
+    <motion.div
+      animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.1, 1] }}
+      transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
       style={{
-        position: 'absolute',
-        top: '-15%',
-        left: '-10%',
-        width: '55vw',
-        height: '55vw',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(212,168,75,0.06) 0%, transparent 65%)',
-      }}
-    />
-    <div
-      style={{
-        position: 'absolute',
-        bottom: '-12%',
-        right: '-6%',
-        width: '48vw',
-        height: '48vw',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(100,130,200,0.05) 0%, transparent 65%)',
-      }}
-    />
-    <div
-      style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%,-50%)',
-        width: '40vw',
-        height: '40vw',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(212,168,75,0.025) 0%, transparent 65%)',
+        position: 'absolute', top: '10%', left: '20%', width: '40vw', height: '40vw', borderRadius: '50%',
+        background: `radial-gradient(circle, ${C.text}20 0%, transparent 60%)`,
+        filter: 'blur(60px)'
       }}
     />
   </div>
 ));
-Orbs.displayName = 'Orbs';
+AmbientGlow.displayName = 'AmbientGlow';
 
-const Img = ({ src, alt, className, style: s, fallbackIcon: FI }: {
-  src: string;
-  alt: string;
-  className?: string;
-  style?: CSSProperties;
-  fallbackIcon?: ElementType;
-}) => {
-  const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
-
+const Img = ({ src, alt, className, style: s, loading = 'lazy' }: any) => {
+  const [status, setStatus] = useState('loading');
   useEffect(() => {
     const img = new Image();
     img.src = src;
-    if (img.complete) {
-      setStatus('loaded');
-    } else {
-      setStatus('loading');
+    if (img.complete) setStatus('loaded');
+    else {
       img.onload = () => setStatus('loaded');
       img.onerror = () => setStatus('error');
     }
-    return () => {
-      img.onload = null;
-      img.onerror = null;
-    };
   }, [src]);
 
   return (
-    <div
-      className="relative w-full h-full overflow-hidden flex items-center justify-center"
-      style={{ background: C.card }}
-    >
-      {status === 'error' && (
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ color: 'rgba(212,168,75,0.22)' }}
-        >
-          {FI ? <FI size={52} strokeWidth={0.7} /> : <ImageOff size={52} strokeWidth={0.7} />}
-        </div>
-      )}
-      {status === 'loading' && (
-        <div className="absolute inset-0 animate-pulse" style={{ background: C.card }} />
-      )}
+    <div className={`relative w-full h-full overflow-hidden flex items-center justify-center ${className}`} style={{ background: 'var(--bg-card)', ...s }}>
+      {status === 'error' && <ImageOff size={32} strokeWidth={1} color={'var(--text-muted)'} />}
+      {status === 'loading' && <div className="absolute inset-0 animate-pulse" style={{ background: 'var(--bg-surface)' }} />}
       <img
-        src={src}
-        alt={alt}
-        className={className}
+        src={src} alt={alt}
+        loading={loading}
+        className="absolute inset-0 w-full h-full object-cover"
         style={{
-          ...s,
-          transition: 'opacity 0.7s',
+          transition: 'opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
           opacity: status === 'loaded' ? 1 : 0,
+          transform: status === 'loaded' ? 'scale(1)' : 'scale(1.05)',
         }}
       />
     </div>
   );
 };
 
-const Cursor = () => {
+/* ============================================================================
+   SMOOTH MAGNETIC CURSOR
+============================================================================ */
+const Cursor = ({ C }: { C: typeof THEMES.dark }) => {
   const reduced = usePrefersReducedMotion();
   const isTouch = useIsTouchDevice();
-  const mx = useMotionValue(-200);
-  const my = useMotionValue(-200);
+  const mx = useMotionValue(-100);
+  const my = useMotionValue(-100);
   const [isHovering, setIsHovering] = useState(false);
-  const rx = useSpring(mx, { stiffness: 160, damping: 20, mass: 0.4 });
-  const ry = useSpring(my, { stiffness: 160, damping: 20, mass: 0.4 });
+  
+  const rx = useSpring(mx, { stiffness: 150, damping: 20, mass: 0.5 });
+  const ry = useSpring(my, { stiffness: 150, damping: 20, mass: 0.5 });
 
   useEffect(() => {
     if (reduced || isTouch) return;
-
-    const onMouseMove = throttle((e: MouseEvent) => {
-      mx.set(e.clientX);
-      my.set(e.clientY);
-    }, 16);
-
-    const onMouseOver = (e: MouseEvent) => {
-      if ((e.target as Element)?.closest?.('a,button,[role=button]')) {
-        setIsHovering(true);
-      }
-    };
-    const onMouseOut = (e: MouseEvent) => {
-      if ((e.target as Element)?.closest?.('a,button,[role=button]')) {
-        setIsHovering(false);
-      }
-    };
-
+    const onMouseMove = throttle((e: MouseEvent) => { mx.set(e.clientX); my.set(e.clientY); }, 16);
+    const onMouseOver = (e: MouseEvent) => { if ((e.target as Element)?.closest?.('a,button,[role=button]')) setIsHovering(true); };
+    const onMouseOut = (e: MouseEvent) => { if ((e.target as Element)?.closest?.('a,button,[role=button]')) setIsHovering(false); };
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseover', onMouseOver);
     window.addEventListener('mouseout', onMouseOut);
-
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseover', onMouseOver);
@@ -285,733 +230,253 @@ const Cursor = () => {
   if (reduced || isTouch) return null;
 
   return (
-    <div className="hidden md:block pointer-events-none fixed inset-0 z-[998]">
+    <div className="hidden md:block pointer-events-none fixed inset-0 z-[998] mix-blend-difference">
       <motion.div
-        className="absolute top-0 left-0 rounded-full border"
+        className="absolute top-0 left-0 rounded-full bg-white flex items-center justify-center overflow-hidden"
         style={{ x: rx, y: ry, translateX: '-50%', translateY: '-50%' }}
-        animate={{
-          width: isHovering ? 50 : 36,
-          height: isHovering ? 50 : 36,
-          borderColor: isHovering ? C.gold : 'rgba(212,168,75,0.25)',
+        animate={{ 
+          width: isHovering ? 64 : 12, 
+          height: isHovering ? 64 : 12,
+          opacity: isHovering ? 1 : 0.8
         }}
-        transition={{ type: 'spring', stiffness: 220, damping: 24 }}
-      />
-      <motion.div
-        className="absolute top-0 left-0 rounded-full"
-        style={{
-          x: mx,
-          y: my,
-          translateX: '-50%',
-          translateY: '-50%',
-          width: 5,
-          height: 5,
-          background: C.gold,
-        }}
-      />
-    </div>
-  );
-};
-
-const BackToTop = memo(() => {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const toggle = () => setVisible(window.scrollY > 700);
-    window.addEventListener('scroll', toggle, { passive: true });
-    return () => window.removeEventListener('scroll', toggle);
-  }, []);
-
-  return (
-    <AnimatePresence>
-      {visible && (
-        <motion.button
-          initial={{ opacity: 0, y: 12, scale: 0.8 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 12, scale: 0.8 }}
-          onClick={() => scrollToId('home')}
-          aria-label="Back to top"
-          className="fixed flex items-center justify-center rounded-full"
-          style={{
-            bottom: 28,
-            right: 28,
-            zIndex: 90,
-            width: 52,
-            height: 52,
-            background: `linear-gradient(135deg,${C.surface},${C.card})`,
-            border: `1.5px solid ${C.border}`,
-            color: C.gold,
-            boxShadow: `0 8px 32px rgba(0,0,0,0.45)`,
-          }}
-          whileHover={{ scale: 1.1, borderColor: C.borderHov }}
-          whileTap={{ scale: 0.93 }}
-        >
-          <ChevronUp size={22} />
-        </motion.button>
-      )}
-    </AnimatePresence>
-  );
-});
-BackToTop.displayName = 'BackToTop';
-
-const ScrollProgress = memo(() => {
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
-  return (
-    <motion.div
-      className="fixed left-0 right-0 origin-left pointer-events-none"
-      style={{
-        top: 0,
-        height: 2,
-        background: `linear-gradient(90deg,${C.gold},${C.goldLight})`,
-        scaleX,
-        zIndex: 200,
-      }}
-    />
-  );
-});
-ScrollProgress.displayName = 'ScrollProgress';
-
-/* ----------------------------------------------------------------------------
-   PARTICLES
----------------------------------------------------------------------------- */
-const Particles = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouse = useRef({ x: -9999, y: -9999 });
-  const animationFrame = useRef<number>(0);
-  const reduced = usePrefersReducedMotion();
-  const isTouch = useIsTouchDevice();
-  const [isVisible, setIsVisible] = useState(true);
-
-  useEffect(() => {
-    const onVisibilityChange = () => setIsVisible(!document.hidden);
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
-  }, []);
-
-  useEffect(() => {
-    if (reduced || isTouch) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let width = 0;
-    let height = 0;
-    let particles: Array<{
-      x: number;
-      y: number;
-      ox: number;
-      oy: number;
-      vx: number;
-      vy: number;
-      sz: number;
-      op: number;
-      sp: number;
-      ph: number;
-    }> = [];
-
-    const initParticles = () => {
-      particles = [];
-      const cols = width < 640 ? 9 : width < 1024 ? 18 : 24;
-      const rows = width < 640 ? 7 : width < 1024 ? 11 : 15;
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const ox = (width / (cols + 1)) * (c + 1) + (Math.random() - 0.5) * 14;
-          const oy = (height / (rows + 1)) * (r + 1) + (Math.random() - 0.5) * 10;
-          particles.push({
-            x: ox,
-            y: oy,
-            ox,
-            oy,
-            vx: 0,
-            vy: 0,
-            sz: Math.random() * 1.1 + 0.3,
-            op: Math.random() * 0.15 + 0.05,
-            sp: Math.random() * 0.5 + 0.7,
-            ph: Math.random() * Math.PI * 2,
-          });
-        }
-      }
-    };
-
-    const resize = () => {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-      initParticles();
-    };
-
-    let time = 0;
-    const MAX_DIST = 165;
-    const REPEL = 0.55;
-    const RETURN_SPEED = 0.04;
-    const DAMP = 0.78;
-
-    const draw = () => {
-      if (!ctx || !canvas) return;
-      ctx.clearRect(0, 0, width, height);
-
-      if (isVisible) {
-        time += 0.003;
-        const { x: mx, y: my } = mouse.current;
-
-        for (let i = 0; i < particles.length; i++) {
-          for (let j = i + 1; j < particles.length; j++) {
-            const dx = particles[i].x - particles[j].x;
-            const dy = particles[i].y - particles[j].y;
-            const d = Math.hypot(dx, dy);
-            if (d < 85) {
-              ctx.strokeStyle = `rgba(212,168,75,${(1 - d / 85) * 0.065})`;
-              ctx.beginPath();
-              ctx.moveTo(particles[i].x, particles[i].y);
-              ctx.lineTo(particles[j].x, particles[j].y);
-              ctx.stroke();
-            }
-          }
-        }
-
-        for (const p of particles) {
-          p.ox += Math.sin(time + p.ph) * 0.007;
-          p.oy += Math.cos(time + p.ph * 0.7) * 0.005;
-
-          const dx = mx - p.x;
-          const dy = my - p.y;
-          const d = Math.hypot(dx, dy);
-          if (d < MAX_DIST && mx > 0) {
-            const f = (MAX_DIST - d) / MAX_DIST;
-            const angle = Math.atan2(dy, dx);
-            p.vx -= Math.cos(angle) * f * REPEL * p.sp;
-            p.vy -= Math.sin(angle) * f * REPEL * p.sp;
-          }
-
-          p.vx += (p.ox - p.x) * RETURN_SPEED;
-          p.vy += (p.oy - p.y) * RETURN_SPEED;
-          p.vx *= DAMP;
-          p.vy *= DAMP;
-          p.x += p.vx;
-          p.y += p.vy;
-
-          const glow = mx > 0 ? Math.max(0, 1 - d / MAX_DIST) : 0;
-          ctx.fillStyle = `rgba(212,168,75,${p.op + glow * 0.45})`;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, Math.max(0.1, p.sz + glow * 2.8), 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
-      animationFrame.current = requestAnimationFrame(draw);
-    };
-
-    const onMouseMove = throttle((e: MouseEvent) => {
-      mouse.current = { x: e.clientX, y: e.clientY };
-    }, 16);
-
-    const onMouseLeave = () => {
-      mouse.current = { x: -9999, y: -9999 };
-    };
-
-    window.addEventListener('resize', resize);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseleave', onMouseLeave);
-    resize();
-    draw();
-
-    return () => {
-      cancelAnimationFrame(animationFrame.current!);
-      window.removeEventListener('resize', resize);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseleave', onMouseLeave);
-    };
-  }, [reduced, isTouch, isVisible]);
-
-  if (reduced || isTouch) return null;
-  return <canvas ref={canvasRef} className="absolute inset-0" style={{ background: C.bg }} />;
-};
-
-/* ----------------------------------------------------------------------------
-   HERO
----------------------------------------------------------------------------- */
-const HeroText = ({ onScroll }: { onScroll: () => void }) => {
-  const [showCue, setShowCue] = useState(false);
-  const reduced = usePrefersReducedMotion();
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShowCue(true), reduced ? 80 : 2000);
-    return () => clearTimeout(timer);
-  }, [reduced]);
-
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 'clamp(1rem,3.5vw,2rem)',
-      }}
-    >
-      <motion.p
-        style={{
-          fontFamily: F.display,
-          fontStyle: 'italic',
-          fontWeight: 400,
-          fontSize: 'clamp(1.05rem,3.5vw,2rem)',
-          color: C.gold,
-          letterSpacing: '0.03em',
-          lineHeight: 1.35,
-          textAlign: 'center',
-        }}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: reduced ? 0 : 0.3 }}
+        transition={{ duration: 0.3, ease: EASE }}
       >
-        Learning how systems work.
-      </motion.p>
-
-      <motion.h1
-        style={{
-          fontFamily: F.display,
-          fontWeight: 500,
-          fontSize: 'clamp(2.8rem,11.5vw,9.5rem)',
-          lineHeight: 0.88,
-          letterSpacing: '-0.025em',
-          textAlign: 'center',
-        }}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1, delay: reduced ? 0 : 0.55, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <span style={{ display: 'block', color: C.ivory }}>Designing how</span>
-        <span style={{ display: 'block', color: 'rgba(242,237,228,0.28)' }}>they feel.</span>
-      </motion.h1>
-
-      <motion.button
-        onClick={onScroll}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '0.9rem',
-          marginTop: 'clamp(2.5rem,7vw,5rem)',
-          cursor: 'pointer',
-          background: 'none',
-          border: 'none',
-          padding: 0,
-        }}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: showCue ? 1 : 0, y: showCue ? 0 : 10 }}
-        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-        aria-label="Scroll to about"
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-          {[0, 1, 2].map((i) => (
+        <AnimatePresence>
+          {isHovering && (
             <motion.div
-              key={i}
-              style={{ width: 1.5, borderRadius: 9999, background: C.gold }}
-              animate={{ height: [10, 22, 10], opacity: [0.35, 0.8, 0.35] }}
-              transition={{ duration: 1.7, delay: i * 0.22, repeat: Infinity, ease: 'easeInOut' }}
-            />
-          ))}
-        </div>
-        <span
-          style={{
-            fontFamily: F.mono,
-            fontSize: 'clamp(9px,2vw,11px)',
-            letterSpacing: '0.6em',
-            textTransform: 'uppercase',
-            color: C.muted,
-          }}
-        >
-          Begin
-        </span>
-      </motion.button>
-    </div>
-  );
-};
-
-const Photo = () => {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-60px' });
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
-  const y = useTransform(scrollYProgress, [0, 1], [40, -40]);
-
-  return (
-    <div
-      ref={ref}
-      style={{
-        position: 'relative',
-        width: '100%',
-        maxWidth: 'min(300px,75vw)',
-        margin: '0 auto',
-        userSelect: 'none',
-      }}
-    >
-      <motion.div
-        style={{
-          position: 'absolute',
-          inset: -18,
-          borderRadius: '50%',
-          border: `1px solid ${C.border}`,
-          pointerEvents: 'none',
-          willChange: 'transform',
-        }}
-        initial={{ opacity: 0 }}
-        animate={inView ? { opacity: 1, rotate: [0, 360] } : {}}
-        transition={{ opacity: { delay: 0.8, duration: 0.6 }, rotate: { duration: 26, repeat: Infinity, ease: 'linear' } }}
-      />
-      <motion.div
-        style={{
-          position: 'absolute',
-          inset: -34,
-          borderRadius: '50%',
-          border: `1px solid rgba(212,168,75,0.07)`,
-          pointerEvents: 'none',
-          willChange: 'transform',
-        }}
-        initial={{ opacity: 0 }}
-        animate={inView ? { opacity: 1, rotate: [0, -360] } : {}}
-        transition={{ opacity: { delay: 1, duration: 0.6 }, rotate: { duration: 40, repeat: Infinity, ease: 'linear' } }}
-      />
-      <motion.div
-        style={{
-          aspectRatio: '1/1',
-          borderRadius: '50%',
-          overflow: 'hidden',
-          position: 'relative',
-          border: `1.5px solid rgba(212,168,75,0.25)`,
-          boxShadow: `0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(212,168,75,0.08)`,
-          y,
-        }}
-        initial={{ clipPath: 'circle(0% at 50% 50%)', opacity: 0 }}
-        animate={inView ? { clipPath: 'circle(75% at 50% 50%)', opacity: 1 } : {}}
-        transition={{ duration: 1.25, delay: 0.15, ease: [0.33, 0, 0.1, 1] }}
-      >
-        <Img
-          src="/max.jpg"
-          alt="Flynn Maxwel D"
-          className="absolute inset-0 w-full h-full object-cover"
-          fallbackIcon={User}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: `linear-gradient(to top,${C.bg}66 0%,transparent 55%)`,
-            pointerEvents: 'none',
-          }}
-        />
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              className="text-black"
+            >
+              <ArrowUpRight size={24} strokeWidth={1.5} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );
 };
 
-/* ----- ABOUT TEXT with metallic gold quote ----- */
-const AboutText = () => {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-50px' });
-  const reduced = usePrefersReducedMotion();
-  const paragraphs = [
-    "I don't see computers as machines — I see them as complex systems shaped by structure and intent. What started as curiosity about what lies beneath the screen became a focus on building things that are deliberate, stable, and well thought out.",
-    "During periods of isolation, working with logic and machines helped me regain clarity. That foundation led me into system-level automation and UI/UX design, where I focus on balancing raw performance with human-centered experience.",
-  ];
-
+/* ============================================================================
+   SECTIONS
+============================================================================ */
+const HeroText = ({ C }: { C: typeof THEMES.dark }) => {
   return (
-    <div
-      ref={ref}
-      style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(1.4rem,4vw,2.2rem)' }}
-    >
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', minHeight: '100vh', padding: '0 5vw', position: 'relative' }}>
       <motion.div
-        style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}
-        initial={{ opacity: 0, x: -12 }}
-        animate={inView ? { opacity: 1, x: 0 } : {}}
-        transition={{ duration: 0.55 }}
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1.2, ease: EASE, delay: 0.2 }}
+        style={{ maxWidth: '1000px' }}
       >
-        <span style={{ fontFamily: F.mono, fontSize: 11, letterSpacing: '-0.02em', color: C.muted }}>
-          [01]
-        </span>
-        <div style={{ height: 1.5, width: 40, background: `linear-gradient(90deg,${C.gold},transparent)` }} />
-        <span
-          style={{
-            fontFamily: F.mono,
-            fontSize: 11,
-            letterSpacing: '0.5em',
-            textTransform: 'uppercase',
-            color: C.muted,
-          }}
-        >
-          Identity
-        </span>
-      </motion.div>
-
-      {paragraphs.map((text, idx) => (
-        <motion.p
-          key={idx}
-          style={{
-            fontFamily: F.body,
-            fontWeight: 400,
-            fontSize: 'clamp(0.95rem,2.2vw,1.12rem)',
-            color: C.text,
-            lineHeight: 1.82,
-          }}
-          initial={{ opacity: 0, y: 18 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.75, delay: 0.14 + idx * 0.13, ease: [0.16, 1, 0.3, 1] }}
-        >
-          {text}
-        </motion.p>
-      ))}
-
-      <motion.blockquote
-        style={{
-          position: 'relative',
-          paddingLeft: 'clamp(1.1rem,3.5vw,1.8rem)',
-          margin: 0,
-        }}
-        initial={{ opacity: 0, x: -8 }}
-        animate={inView ? { opacity: 1, x: 0 } : {}}
-        transition={{ duration: 0.75, delay: 0.42 }}
-      >
-        <div
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: 2.5,
-            borderRadius: 9999,
-            background: `linear-gradient(to bottom,${C.gold},transparent)`,
-          }}
-        />
-        <motion.p
-          style={{
-            fontFamily: F.display,
-            fontStyle: 'italic',
-            fontWeight: 400,
-            fontSize: 'clamp(1.05rem,2.8vw,1.4rem)',
-            lineHeight: 1.6,
-            // Metallic gold gradient
-            backgroundImage: 'linear-gradient(135deg, #b8860b 0%, #d4a84b 30%, #f9e076 50%, #d4a84b 70%, #b8860b 100%)',
-            backgroundSize: '200% 200%',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            color: 'transparent', // fallback
-            // Text shadows for depth and shine
-            textShadow: `
-              0 1px 0 rgba(255,255,255,0.3),
-              0 2px 3px rgba(0,0,0,0.4),
-              0 4px 8px rgba(0,0,0,0.3)
-            `,
-            willChange: 'background-position',
-          }}
-          animate={!reduced ? { backgroundPosition: ['0% 0%', '100% 100%'] } : undefined}
-          transition={!reduced ? { duration: 4, repeat: Infinity, ease: 'linear', repeatType: 'mirror' } : undefined}
-        >
-          "Take risks only when you are prepared to face failure."
-        </motion.p>
-      </motion.blockquote>
-    </div>
-  );
-};
-
-/* ----- SKILLS ----- */
-const SkillBar = ({ name, level, index, inView }: {
-  name: string;
-  level: number;
-  index: number;
-  inView: boolean;
-}) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <span
-        style={{
-          fontFamily: F.mono,
-          fontSize: 'clamp(10px,2vw,12px)',
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color: C.text,
-        }}
-      >
-        {name}
-      </span>
-      <motion.span
-        style={{ fontFamily: F.mono, fontSize: 'clamp(10px,2vw,11px)', color: C.gold, fontWeight: 500 }}
-        initial={{ opacity: 0 }}
-        animate={inView ? { opacity: 1 } : {}}
-        transition={{ delay: index * 0.09 + 0.5 }}
-      >
-        {level}%
-      </motion.span>
-    </div>
-    <div style={{ height: 2, borderRadius: 9999, overflow: 'hidden', background: 'rgba(212,168,75,0.1)' }}>
-      <motion.div
-        style={{
-          height: '100%',
-          borderRadius: 9999,
-          background: `linear-gradient(90deg,${C.gold},${C.goldLight})`,
-        }}
-        initial={{ width: 0 }}
-        animate={inView ? { width: `${level}%` } : { width: 0 }}
-        transition={{ duration: 1.4, delay: index * 0.09 + 0.3, ease: [0.16, 1, 0.3, 1] }}
-      />
-    </div>
-  </div>
-);
-
-const Skills = () => {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-60px' });
-  const extras = ['Figma', 'REST APIs', 'Firebase', 'TypeScript', 'Node.js', 'Gemini AI'];
-
-  return (
-    <section
-      id="skills"
-      style={{
-        position: 'relative',
-        overflow: 'hidden',
-        padding: 'clamp(4rem,10vw,9rem) clamp(1.25rem,6vw,6rem)',
-        background: C.surface,
-      }}
-    >
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          opacity: 0.025,
-          backgroundImage: `linear-gradient(rgba(212,168,75,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(212,168,75,0.5) 1px,transparent 1px)`,
-          backgroundSize: '72px 72px',
-        }}
-      />
-      <div className="max-w-6xl mx-auto relative z-10" ref={ref}>
-        <motion.div
-          style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: 'clamp(2rem,6vw,4rem)' }}
-          initial={{ opacity: 0, y: 14 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-        >
-          <span style={{ fontFamily: F.mono, fontSize: 11, color: C.muted }}>[01.5]</span>
-          <div style={{ height: 1.5, width: 40, background: `linear-gradient(90deg,${C.gold},transparent)` }} />
-          <span
+        <p style={{ fontFamily: F.sans, fontSize: '1rem', color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '2rem' }}>
+          Flynn Maxwel D - FullStack Developer
+        </p>
+        
+        <h1 style={{
+          fontFamily: F.display, fontWeight: 400, fontSize: 'clamp(3rem, 8vw, 7rem)',
+          lineHeight: 1.1, color: C.text, margin: 0, letterSpacing: '-0.02em'
+        }}>
+          Learning how systems work.<br/>
+          <span style={{ fontStyle: 'italic', color: C.muted }}>Designing how they feel.</span>
+        </h1>
+        
+        <div style={{ marginTop: '3rem', display: 'flex', gap: '2rem', alignItems: 'center' }}>
+          <motion.button
+            onClick={() => scrollToId('work')}
+            whileHover={{ paddingRight: '2rem' }}
+            aria-label="View my work"
             style={{
-              fontFamily: F.mono,
-              fontSize: 11,
-              letterSpacing: '0.5em',
-              textTransform: 'uppercase',
-              color: C.muted,
+              fontFamily: F.sans, fontSize: '1rem', color: C.bg, background: C.text, padding: '1rem 1.5rem',
+              borderRadius: '99px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
+              transition: 'padding 0.3s ease'
             }}
           >
-            Capabilities
+            View Work <ArrowRight size={18} />
+          </motion.button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const About = ({ C }: { C: typeof THEMES.dark }) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-100px' });
+
+  return (
+    <section id="about" ref={ref} style={{ padding: 'clamp(6rem, 12vw, 12rem) 5vw' }}>
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-16 items-center">
+        
+        <div className="md:col-span-5 flex flex-col gap-8">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={inView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ duration: 1.2, ease: EASE }}
+            style={{ 
+              aspectRatio: '1/1', 
+              width: '100%',
+              maxWidth: '380px',
+              margin: '0 auto',
+              borderRadius: '50%', 
+              padding: '12px',
+              border: `1px solid ${C.border}`,
+              position: 'relative',
+            }}
+          >
+            <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', position: 'relative' }}>
+              <Img src="/api/placeholder/380/380" alt="Flynn Maxwel D" />
+            </div>
+          </motion.div>
+          
+          <motion.blockquote
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 1, delay: 0.3, ease: EASE }}
+            style={{ fontFamily: F.display, fontSize: 'clamp(1.1rem, 2vw, 1.4rem)', color: C.text, fontStyle: 'italic', borderLeft: `1px solid ${C.border}`, paddingLeft: '1.5rem', lineHeight: 1.5 }}
+          >
+            "Take risks only when you are prepared to face failure."
+          </motion.blockquote>
+        </div>
+
+        <div className="md:col-span-7 flex flex-col gap-8">
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 1, ease: EASE }}
+            style={{ fontFamily: F.display, fontSize: 'clamp(2.5rem, 5vw, 4rem)', lineHeight: 1.1, color: C.text }}
+          >
+            About <span style={{ fontStyle: 'italic', color: C.muted }}>Me.</span>
+          </motion.h2>
+          
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 1, delay: 0.1, ease: EASE }}
+            style={{ fontFamily: F.sans, fontSize: 'clamp(1.05rem, 1.5vw, 1.15rem)', color: C.text, lineHeight: 1.8, fontWeight: 300 }}
+          >
+            I don't see computers as machines — I see them as complex systems shaped by structure and intent. What started as curiosity about what lies beneath the screen became a focus on building things that are deliberate, stable, and well thought out.
+          </motion.p>
+          
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 1, delay: 0.2, ease: EASE }}
+            style={{ fontFamily: F.sans, fontSize: 'clamp(1rem, 1.5vw, 1.1rem)', color: C.muted, lineHeight: 1.8, fontWeight: 300 }}
+          >
+            During periods of isolation, working with logic and machines helped me regain clarity. That foundation led me into system-level automation and UI/UX design, where I focus on balancing raw performance with human-centered experience.
+          </motion.p>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const SkillBar = ({ name, level, index, C }: any) => {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1rem 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontFamily: F.sans, fontSize: '1rem', color: C.text, fontWeight: 300, letterSpacing: '0.02em' }}>{name}</span>
+        <span style={{ fontFamily: F.display, fontSize: '0.95rem', color: C.muted, fontStyle: 'italic' }}>{level}%</span>
+      </div>
+      <div style={{ height: '1px', background: C.border, width: '100%', position: 'relative' }}>
+        <motion.div
+          initial={{ scaleX: 0 }}
+          whileInView={{ scaleX: level / 100 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1.5, delay: 0.1 + index * 0.1, ease: EASE }}
+          style={{ position: 'absolute', top: 0, left: 0, bottom: 0, background: C.text, transformOrigin: 'left' }}
+        />
+      </div>
+    </div>
+  );
+};
+
+const ExpertiseRow = ({ group, index, isOpen, onToggle, C }: any) => {
+  return (
+    <div style={{ borderBottom: `1px solid ${C.border}` }}>
+      <button
+        onClick={onToggle}
+        style={{
+          width: '100%', background: 'none', border: 'none', padding: '2.5rem 0', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', textAlign: 'left'
+        }}
+        className="group"
+        aria-expanded={isOpen}
+        aria-label={`${group.cat} skills section`}
+      >
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 'clamp(1.5rem, 4vw, 3rem)' }}>
+          <span style={{ fontFamily: F.display, fontSize: 'clamp(1.2rem, 2vw, 1.5rem)', color: isOpen ? C.text : C.muted, fontStyle: 'italic', transition: 'color 0.4s ease' }}>
+            0{index + 1}
           </span>
+          <h3 style={{
+            fontFamily: F.sans, fontSize: 'clamp(1.5rem, 4vw, 3rem)', color: isOpen ? C.text : C.muted,
+            fontWeight: 300, textTransform: 'uppercase', letterSpacing: '0.05em', transition: 'color 0.4s ease'
+          }}>
+            {group.cat}
+          </h3>
+        </div>
+        <motion.div
+          animate={{ rotate: isOpen ? 45 : 0 }}
+          transition={{ duration: 0.6, ease: EASE }}
+          style={{ color: isOpen ? C.text : C.muted, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: '50%', border: `1px solid ${isOpen ? C.text : C.border}`, transition: 'border-color 0.4s ease, color 0.4s ease' }}
+        >
+          <div style={{ position: 'relative', width: 14, height: 14 }}>
+             <div style={{ position: 'absolute', top: '50%', left: 0, width: '100%', height: 1, background: 'currentColor', transform: 'translateY(-50%)' }} />
+             <div style={{ position: 'absolute', top: 0, left: '50%', width: 1, height: '100%', background: 'currentColor', transform: 'translateX(-50%)' }} />
+          </div>
+        </motion.div>
+      </button>
+      
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.8, ease: EASE }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div style={{ paddingBottom: '3.5rem', paddingTop: '0.5rem' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-2 pl-[clamp(3rem,6vw,4.5rem)]">
+                {group.items.map((skill: any, i: number) => (
+                  <SkillBar key={skill.n} name={skill.n} level={skill.l} index={i} C={C} />
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const Expertise = ({ C }: { C: typeof THEMES.dark }) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-100px' });
+  const [openIndex, setOpenIndex] = useState(0);
+
+  return (
+    <section id="expertise" ref={ref} style={{ padding: 'clamp(6rem, 12vw, 10rem) 5vw', background: C.surface }}>
+      <div className="max-w-6xl mx-auto">
+        <motion.div style={{ marginBottom: '6rem' }} initial={{ opacity: 0, y: 20 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.8, ease: EASE }}>
+          <h2 style={{ fontFamily: F.display, fontSize: 'clamp(3rem, 6vw, 5rem)', color: C.text, lineHeight: 1 }}>
+            Technical<br/><span style={{ fontStyle: 'italic', color: C.muted }}>Expertise</span>
+          </h2>
         </motion.div>
 
-        <motion.h2
-          style={{
-            fontFamily: F.display,
-            fontStyle: 'italic',
-            fontWeight: 400,
-            fontSize: 'clamp(2rem,6.5vw,4.5rem)',
-            color: C.ivory,
-            lineHeight: 1.08,
-            marginBottom: 'clamp(2.5rem,7vw,6rem)',
-          }}
-          initial={{ opacity: 0, y: 22 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.85, delay: 0.1 }}
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }} 
+          animate={inView ? { opacity: 1, y: 0 } : {}} 
+          transition={{ duration: 1, delay: 0.2, ease: EASE }}
+          style={{ borderTop: `1px solid ${C.border}` }}
+          role="region"
+          aria-labelledby="expertise-title"
         >
-          Tools of the <span style={{ color: `rgba(212,168,75,0.4)` }}>craft.</span>
-        </motion.h2>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))',
-            gap: 'clamp(2.5rem,6vw,4.5rem)',
-          }}
-        >
-          {SKILLS_DATA.map((group, groupIdx) => (
-            <motion.div
-              key={group.cat}
-              style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
-              initial={{ opacity: 0, y: 32 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8, delay: groupIdx * 0.12 + 0.18 }}
-            >
-              <div>
-                <span
-                  style={{
-                    fontFamily: F.mono,
-                    fontSize: 'clamp(10px,2vw,11px)',
-                    letterSpacing: '0.4em',
-                    textTransform: 'uppercase',
-                    color: C.gold,
-                    display: 'block',
-                    marginBottom: 10,
-                  }}
-                >
-                  {group.icon} {group.cat}
-                </span>
-                <div style={{ height: 1.5, background: `rgba(212,168,75,0.15)` }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-                {group.items.map((skill, skillIdx) => {
-                  const globalIdx = groupIdx * 4 + skillIdx;
-                  return (
-                    <SkillBar
-                      key={skill.n}
-                      name={skill.n}
-                      level={skill.l}
-                      index={globalIdx}
-                      inView={inView}
-                    />
-                  );
-                })}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        <motion.div
-          style={{
-            marginTop: 'clamp(3rem,8vw,6rem)',
-            paddingTop: '2rem',
-            borderTop: `1px solid ${C.border}`,
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '0.6rem',
-            alignItems: 'center',
-          }}
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.8 }}
-        >
-          <span
-            style={{
-              fontFamily: F.mono,
-              fontSize: 'clamp(10px,2vw,11px)',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: C.muted,
-              marginRight: 8,
-            }}
-          >
-            Also:
-          </span>
-          {extras.map((item, i) => (
-            <motion.span
-              key={item}
-              style={{
-                fontFamily: F.mono,
-                fontSize: 'clamp(10px,2vw,11px)',
-                letterSpacing: '0.08em',
-                padding: '5px 14px',
-                borderRadius: 9999,
-                background: C.goldDim,
-                border: `1px solid ${C.border}`,
-                color: C.gold,
-              }}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={inView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ delay: 0.9 + i * 0.06 }}
-            >
-              {item}
-            </motion.span>
+          {SKILLS_DATA.map((group, idx) => (
+            <ExpertiseRow 
+              key={group.cat} 
+              group={group} 
+              index={idx} 
+              isOpen={openIndex === idx} 
+              onToggle={() => setOpenIndex(openIndex === idx ? -1 : idx)}
+              C={C}
+            />
           ))}
         </motion.div>
       </div>
@@ -1019,400 +484,159 @@ const Skills = () => {
   );
 };
 
-/* ----- PROJECT CARD ----- */
-const ProjectCard = ({ project, index }: { project: typeof PROJECTS[number]; index: number }) => {
-  const [hovered, setHovered] = useState(false);
-  const isTouch = useIsTouchDevice();
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const rotX = useTransform(my, [-80, 80], [4, -4]);
-  const rotY = useTransform(mx, [-80, 80], [-4, 4]);
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isTouch || !cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    mx.set(e.clientX - rect.left - rect.width / 2);
-    my.set(e.clientY - rect.top - rect.height / 2);
-  };
+const ProjectCard = ({ project, index, C }: any) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
     <motion.article
-      style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(1rem,2.5vw,1.5rem)' }}
-      initial={{ opacity: 0, y: 38 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.8, delay: index * 0.14, ease: [0.16, 1, 0.3, 1] }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => {
-        setHovered(false);
-        mx.set(0);
-        my.set(0);
-      }}
+      ref={ref}
+      initial={{ opacity: 0, y: 50 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 1, delay: index * 0.1, ease: EASE }}
+      className="group cursor-pointer"
+      style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}
+      onClick={() => window.open(project.url, '_blank')}
+      role="button"
+      tabIndex={0}
+      onKeyPress={(e) => e.key === 'Enter' && window.open(project.url, '_blank')}
+      aria-label={`${project.title} project`}
     >
-      <motion.div
-        ref={cardRef}
-        onMouseMove={handleMouseMove}
-        style={{
-          rotateX: isTouch ? 0 : rotX,
-          rotateY: isTouch ? 0 : rotY,
-          transformPerspective: 1000,
-          position: 'relative',
-          width: '100%',
-          paddingBottom: '62%',
-          borderRadius: 16,
-          overflow: 'hidden',
-          border: `1.5px solid ${hovered ? C.borderHov : C.border}`,
-          transition: 'border-color 0.35s',
-          boxShadow: hovered
-            ? `0 32px 80px rgba(0,0,0,0.55),0 0 0 1px rgba(212,168,75,0.12)`
-            : `0 12px 40px rgba(0,0,0,0.4)`,
-          willChange: 'transform',
-        }}
-      >
-        <div style={{ position: 'absolute', inset: 0 }}>
-          <Img
-            src={`/project-${project.id}.jpg`}
-            alt={project.title}
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{
-              opacity: hovered ? 0.9 : 0.62,
-              transform: hovered ? 'scale(1)' : 'scale(1.06)',
-              transition: 'opacity 0.6s,transform 0.6s',
-            }}
-            fallbackIcon={project.icon}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: `linear-gradient(to top,${C.bg}dd 0%,${C.bg}44 55%,transparent 100%)`,
-              pointerEvents: 'none',
-            }}
-          />
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            padding: 'clamp(1rem,3vw,1.6rem)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: F.mono,
-              fontSize: 'clamp(8px,1.6vw,10px)',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: C.gold,
-              background: `rgba(17,19,24,0.88)`,
-              padding: '6px 14px',
-              borderRadius: 9999,
-              border: `1px solid ${C.border}`,
-              backdropFilter: 'blur(8px)',
-            }}
-          >
-            {project.header}
-          </span>
-          {project.url && (
-            <motion.a
-              href={project.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                width: 40,
-                height: 40,
-                background: C.gold,
-                color: C.bg,
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '50%',
-                boxShadow: `0 4px 16px rgba(212,168,75,0.4)`,
-              }}
-              initial={{ opacity: 0, scale: 0.5, rotate: -45 }}
-              animate={{ opacity: hovered ? 1 : 0, scale: hovered ? 1 : 0.5, rotate: hovered ? 0 : -45 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 22 }}
-              aria-label={`View ${project.title} on GitHub`}
-            >
-              <ArrowUpRight size={18} />
-            </motion.a>
-          )}
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            padding: 'clamp(1rem,3vw,1.6rem)',
-          }}
-        >
-          <p
-            style={{
-              fontFamily: F.brand,
-              fontWeight: 900,
-              fontSize: 'clamp(1.5rem,5.5vw,2.8rem)',
-              color: 'rgba(255,255,255,0.04)',
-              lineHeight: 1,
-              letterSpacing: '-0.02em',
-              marginBottom: 6,
-            }}
-          >
-            /{project.displayId}
-          </p>
-          <h3
-            style={{
-              fontFamily: F.display,
-              fontStyle: 'italic',
-              fontWeight: 400,
-              fontSize: 'clamp(1.2rem,3.5vw,1.7rem)',
-              color: C.ivory,
-              lineHeight: 1.1,
-            }}
-          >
-            {project.title}
-          </h3>
-          {project.subtitle && (
-            <p
-              style={{
-                fontFamily: F.mono,
-                fontSize: 'clamp(8px,1.7vw,10px)',
-                letterSpacing: '0.1em',
-                color: `rgba(212,168,75,0.6)`,
-                marginTop: 4,
-              }}
-            >
-              {project.subtitle}
-            </p>
-          )}
-        </div>
-      </motion.div>
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', overflow: 'hidden', borderRadius: '12px', background: C.surface }}>
+        <motion.div className="w-full h-full" whileHover={{ scale: 1.03 }} transition={{ duration: 1.2, ease: EASE }}>
+          <Img src={`/api/placeholder/1200/900`} alt={project.title} className="opacity-90 group-hover:opacity-100 transition-opacity duration-700" loading="lazy" />
+        </motion.div>
+      </div>
 
-      <p
-        style={{
-          fontFamily: F.body,
-          fontWeight: 400,
-          fontSize: 'clamp(0.85rem,2.1vw,0.95rem)',
-          color: C.text,
-          lineHeight: 1.76,
-        }}
-      >
-        {project.desc}
-      </p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {project.tags.map((tag) => (
-          <span
-            key={tag}
-            style={{
-              fontFamily: F.mono,
-              fontSize: 'clamp(9px,1.8vw,10px)',
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              padding: '5px 14px',
-              borderRadius: 9999,
-              background: C.goldDim,
-              border: `1px solid ${C.border}`,
-              color: C.gold,
-            }}
-          >
-            {tag}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <span style={{ fontFamily: F.sans, fontSize: '0.85rem', color: C.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          {project.header}
+        </span>
+        <h3 style={{ fontFamily: F.display, fontSize: '2rem', color: C.text, display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {project.title}
+        </h3>
+        {project.subtitle && (
+          <span style={{ fontFamily: F.sans, fontSize: '0.9rem', color: C.muted, marginTop: '-0.25rem' }}>
+            {project.subtitle}
           </span>
-        ))}
+        )}
+        <p style={{ fontFamily: F.sans, fontSize: '1rem', color: C.muted, lineHeight: 1.6, maxWidth: '80%' }}>
+          {project.desc}
+        </p>
+        
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+          {project.tags?.map(tag => (
+            <span key={tag} style={{ fontFamily: F.sans, fontSize: '0.75rem', padding: '0.3rem 0.8rem', borderRadius: '99px', border: `1px solid ${C.border}`, color: C.text }}>
+              {tag}
+            </span>
+          ))}
+        </div>
       </div>
     </motion.article>
   );
 };
 
-/* ----- CONTACT ----- */
-const Contact = memo(() => {
-  const ref = useRef<HTMLElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-50px' });
+const Work = ({ C }: { C: typeof THEMES.dark }) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-100px' });
+  const [filter, setFilter] = useState('all');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setFilter(params.get('filter') || 'all');
+  }, []);
+
+  const updateFilter = (newFilter: string) => {
+    setFilter(newFilter);
+    window.history.pushState({}, '', `?filter=${newFilter}`);
+  };
+
+  const filtered = filter === 'all' 
+    ? PROJECTS 
+    : PROJECTS.filter(p => (p as any).category === filter);
 
   return (
-    <section
-      id="contact"
-      ref={ref}
-      style={{
-        position: 'relative',
-        overflow: 'hidden',
-        minHeight: '80vh',
-        padding: 'clamp(4rem,12vw,9rem) clamp(1.25rem,6vw,6rem)',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-      }}
-    >
-      <motion.div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          pointerEvents: 'none',
-          userSelect: 'none',
-        }}
-        initial={{ opacity: 0 }}
-        animate={inView ? { opacity: 1 } : {}}
-        transition={{ duration: 1.5, delay: 0.2 }}
-      >
-        <span
-          style={{
-            fontFamily: F.brand,
-            fontWeight: 900,
-            fontSize: 'clamp(4rem,22vw,18rem)',
-            lineHeight: 1,
-            color: `rgba(212,168,75,0.03)`,
-            letterSpacing: '-0.04em',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          CONTACT
-        </span>
-      </motion.div>
-
-      <div
-        className="max-w-4xl mx-auto text-center relative z-10"
-        style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2rem,5.5vw,4rem)' }}
-      >
-        <motion.div
-          style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.85rem' }}
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
-        >
-          <span style={{ fontFamily: F.mono, fontSize: 11, color: C.muted }}>[03]</span>
-          <div style={{ height: 1.5, width: 40, background: `linear-gradient(90deg,${C.gold},transparent)` }} />
-          <span
-            style={{
-              fontFamily: F.mono,
-              fontSize: 11,
-              letterSpacing: '0.5em',
-              textTransform: 'uppercase',
-              color: C.muted,
-            }}
-          >
-            Inquiry
-          </span>
+    <section id="work" style={{ padding: 'clamp(6rem, 12vw, 12rem) 5vw' }}>
+      <div className="max-w-7xl mx-auto" ref={ref}>
+        <motion.div style={{ marginBottom: '6rem' }} initial={{ opacity: 0, y: 20 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.8, ease: EASE }}>
+          <h2 style={{ fontFamily: F.display, fontSize: 'clamp(3rem, 6vw, 5rem)', color: C.text, lineHeight: 1 }}>Featured<br/><span style={{ fontStyle: 'italic', color: C.muted }}>Projects</span></h2>
         </motion.div>
 
-        <motion.h2
-          style={{
-            fontFamily: F.display,
-            fontStyle: 'italic',
-            fontWeight: 400,
-            fontSize: 'clamp(1.85rem,7.5vw,5rem)',
-            lineHeight: 1.08,
-            color: C.ivory,
-          }}
-          initial={{ opacity: 0, y: 24 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1, delay: 0.1 }}
-        >
-          If it's worth building,<br />
-          <span style={{ color: `rgba(212,168,75,0.42)` }}>it's worth discussing.</span>
+        {/* Project Filter */}
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '4rem', flexWrap: 'wrap' }}>
+          {['all', 'systems', 'ai', 'frontend'].map(f => (
+            <motion.button
+              key={f}
+              onClick={() => updateFilter(f)}
+              style={{
+                fontFamily: F.sans, fontSize: '0.9rem', padding: '0.5rem 1rem', borderRadius: '99px',
+                border: `1px solid ${filter === f ? C.text : C.border}`, background: filter === f ? C.text : 'transparent',
+                color: filter === f ? C.bg : C.text, cursor: 'pointer', transition: 'all 0.3s',
+                textTransform: 'capitalize'
+              }}
+              whileHover={{ scale: 1.05 }}
+            >
+              {f === 'all' ? 'All Projects' : f.charAt(0).toUpperCase() + f.slice(1)}
+            </motion.button>
+          ))}
+        </div>
+        
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={filter}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '6rem 4rem' }}>
+            {filtered.map((p: any, i: number) => <ProjectCard key={p.id} project={p} index={i} C={C} />)}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </section>
+  );
+};
+
+const Contact = memo(({ C }: { C: typeof THEMES.dark }) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-100px' });
+
+  return (
+    <section id="contact" ref={ref} style={{ padding: 'clamp(6rem, 12vw, 12rem) 5vw', background: C.surface }}>
+      <div className="max-w-4xl mx-auto text-center" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3rem' }}>
+        
+        <motion.h2 initial={{ opacity: 0, y: 20 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 1, ease: EASE }}
+          style={{ fontFamily: F.display, fontSize: 'clamp(3rem, 7vw, 6rem)', color: C.text, lineHeight: 1.1 }}>
+          Let's design <br/>
+          <span style={{ fontStyle: 'italic', color: C.muted }}>the future.</span>
         </motion.h2>
 
-        <motion.a
-          href="mailto:flynnmaxweld@gmail.com"
+        <motion.p initial={{ opacity: 0, y: 20 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 1, delay: 0.1, ease: EASE }}
+          style={{ fontFamily: F.sans, fontSize: '1.1rem', color: C.muted }}>
+          Currently open for new opportunities and collaborations.
+        </motion.p>
+
+        <motion.a href="mailto:flynnmaxweld@gmail.com"
+          initial={{ opacity: 0, y: 20 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 1, delay: 0.2, ease: EASE }}
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 'clamp(0.75rem,2vw,1.25rem)',
-            textDecoration: 'none',
-            fontFamily: F.display,
-            fontStyle: 'italic',
-            fontWeight: 400,
-            fontSize: 'clamp(1.1rem,3.5vw,2.1rem)',
-            color: `rgba(212,168,75,0.75)`,
+            fontFamily: F.sans, fontSize: '1.2rem', color: C.bg, background: C.text, textDecoration: 'none', padding: '1.2rem 2.5rem',
+            borderRadius: '99px', display: 'inline-flex', alignItems: 'center', gap: '1rem', marginTop: '1rem', transition: 'opacity 0.3s'
           }}
-          initial={{ opacity: 0, y: 14 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.25 }}
-          whileHover={{ color: C.gold } as any}
+          className="hover:opacity-80"
         >
-          <span style={{ borderBottom: `1px solid rgba(212,168,75,0.25)`, paddingBottom: 3 }}>
-            flynnmaxweld@gmail.com
-          </span>
-          <motion.span animate={{ x: 0 }} whileHover={{ x: 6 }}>
-            <ArrowRight size={22} style={{ color: C.gold }} />
-          </motion.span>
+          <Mail size={20} /> Get in touch
         </motion.a>
 
-        <motion.div
-          style={{
-            paddingTop: 'clamp(1.8rem,5vw,3.5rem)',
-            borderTop: `1px solid ${C.border}`,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '1.5rem',
-          }}
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.38 }}
-        >
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.75rem' }}>
-            {SOCIAL_LINKS.map(({ href, icon: Icon, label }) => (
-              <motion.a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={label}
-                style={{
-                  width: 52,
-                  height: 52,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%',
-                  color: C.muted,
-                  background: C.card,
-                  border: `1.5px solid ${C.border}`,
-                  boxShadow: `0 4px 16px rgba(0,0,0,0.35)`,
-                  transition: 'all 0.25s',
-                  textDecoration: 'none',
-                }}
-                whileHover={{ scale: 1.1, color: C.gold, borderColor: C.borderHov, background: C.surface } as any}
-                whileTap={{ scale: 0.92 }}
-              >
-                <Icon size={20} />
-              </motion.a>
-            ))}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-            <span
-              style={{
-                fontFamily: F.mono,
-                fontSize: 10,
-                letterSpacing: '0.45em',
-                textTransform: 'uppercase',
-                color: `rgba(122,117,104,0.5)`,
-              }}
-            >
-              © 2026 Flynn Maxwel D
-            </span>
-            <span
-              style={{
-                fontFamily: F.mono,
-                fontSize: 10,
-                letterSpacing: '0.3em',
-                textTransform: 'uppercase',
-                color: `rgba(122,117,104,0.3)`,
-              }}
-            >
-              All rights reserved
-            </span>
-          </div>
+        <motion.div style={{ display: 'flex', gap: '2rem', marginTop: '4rem' }}
+          initial={{ opacity: 0 }} animate={inView ? { opacity: 1 } : {}} transition={{ duration: 1, delay: 0.4, ease: EASE }}>
+          <a href="https://linkedin.com/in/flynn-maxwel/" target="_blank" rel="noopener noreferrer" style={{ color: C.muted, textDecoration: 'none', fontFamily: F.sans, fontSize: '0.9rem' }} className="hover:text-white transition-colors">LinkedIn</a>
+          <a href="https://github.com/flynnmaxweld" target="_blank" rel="noopener noreferrer" style={{ color: C.muted, textDecoration: 'none', fontFamily: F.sans, fontSize: '0.9rem' }} className="hover:text-white transition-colors">GitHub</a>
+          <a href="/resume.pdf" target="_blank" rel="noopener noreferrer" style={{ color: C.muted, textDecoration: 'none', fontFamily: F.sans, fontSize: '0.9rem' }} className="hover:text-white transition-colors">Resume</a>
+        </motion.div>
+
+        <motion.div style={{ marginTop: '2rem', fontFamily: F.sans, fontSize: '0.8rem', color: C.muted }}
+          initial={{ opacity: 0 }} animate={inView ? { opacity: 1 } : {}} transition={{ duration: 1, delay: 0.5 }}>
+          © {new Date().getFullYear()} Flynn Maxwel D. All rights reserved.
         </motion.div>
       </div>
     </section>
@@ -1420,356 +644,98 @@ const Contact = memo(() => {
 });
 Contact.displayName = 'Contact';
 
-/* ----------------------------------------------------------------------------
-   NAVBAR
----------------------------------------------------------------------------- */
-const Navbar = memo(({ active }: { active: string }) => {
+/* ============================================================================
+   NAVBAR WITH THEME TOGGLE
+============================================================================ */
+const Navbar = memo(({ active, theme, onThemeToggle }: { active: string; theme: 'light' | 'dark'; onThemeToggle: () => void }) => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const C = THEMES[theme];
 
   useEffect(() => {
-    setMounted(true);
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const glassStyle: CSSProperties = {
-    background: scrolled ? 'rgba(17,19,24,0.94)' : 'rgba(17,19,24,0.78)',
-    backdropFilter: 'blur(24px) saturate(160%)',
-    WebkitBackdropFilter: 'blur(24px) saturate(160%)',
-    border: `1px solid ${C.border}`,
-    boxShadow: scrolled
-      ? `0 12px 48px rgba(0,0,0,0.55),inset 0 1px 0 rgba(212,168,75,0.1)`
-      : `0 6px 28px rgba(0,0,0,0.4),inset 0 1px 0 rgba(212,168,75,0.07)`,
-  };
-
   return (
     <>
-      <div
-        className="fixed top-0 left-0 w-full hidden md:flex justify-center pointer-events-none"
-        style={{ zIndex: 100 }}
+      <motion.nav
+        className="fixed top-0 left-0 w-full z-[100] flex justify-center py-6 pointer-events-none"
+        initial={{ y: -40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 1.2, ease: EASE }}
       >
-        <motion.nav
-          className="pointer-events-auto flex items-center"
+        <div 
+          className="pointer-events-auto flex items-center justify-between px-6 md:px-8 py-3 rounded-full"
           style={{
-            ...glassStyle,
-            borderRadius: 9999,
-            height: 66,
-            padding: '0 8px 0 16px',
-            marginTop: scrolled ? 10 : 18,
-            gap: 0,
+            background: scrolled ? `${C.bg}B3` : 'transparent',
+            backdropFilter: scrolled ? 'blur(20px)' : 'none',
+            border: scrolled ? `1px solid ${C.border}` : '1px solid transparent',
+            width: 'calc(100% - 4rem)',
+            maxWidth: '1200px',
+            transition: 'all 0.4s ease'
           }}
-          initial={{ y: -80, opacity: 0 }}
-          animate={mounted ? { y: 0, opacity: 1 } : {}}
-          transition={{ type: 'spring', stiffness: 300, damping: 34, mass: 0.75 }}
         >
-          {/* FM monogram only */}
-          <motion.button
-            onClick={() => scrollToId('home')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              marginRight: 16,
-              padding: '0 4px',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-            whileTap={{ scale: 0.95 }}
-            aria-label="Go to home"
-          >
-            <div
-              style={{
-                position: 'relative',
-                width: 40,
-                height: 40,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  borderRadius: '50%',
-                  background: `radial-gradient(circle at 38% 32%,rgba(212,168,75,0.28),rgba(212,168,75,0.06))`,
-                  border: `1.5px solid rgba(212,168,75,0.38)`,
-                }}
-              />
-              <span
-                style={{
-                  fontFamily: F.brand,
-                  fontWeight: 900,
-                  fontSize: 10,
-                  color: C.gold,
-                  letterSpacing: '-0.02em',
-                  position: 'relative',
-                  zIndex: 1,
-                }}
-              >
-                FM
-              </span>
-            </div>
-          </motion.button>
+          <button onClick={() => scrollToId('home')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label="Go to home">
+            <span style={{ fontFamily: F.display, fontSize: 20, color: C.text, fontStyle: 'italic' }}>F.M.</span>
+          </button>
 
-          <div style={{ width: 1, height: 24, background: `rgba(212,168,75,0.22)`, flexShrink: 0, marginRight: 8 }} />
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '0 6px' }}>
-            {NAV_LINKS.map((item) => {
+          <div className="hidden md:flex items-center gap-8">
+            {NAV_LINKS.map(item => {
               const isActive = active === item.toLowerCase();
               return (
-                <motion.button
-                  key={item}
-                  onClick={() => scrollToId(item.toLowerCase())}
+                <button key={item} onClick={() => scrollToId(item.toLowerCase())}
                   style={{
-                    position: 'relative',
-                    fontFamily: F.mono,
-                    fontSize: 12,
-                    letterSpacing: '0.22em',
-                    textTransform: 'uppercase',
-                    padding: '10px 18px',
-                    borderRadius: 9999,
-                    cursor: 'pointer',
-                    color: isActive ? C.ivory : `rgba(196,190,180,0.55)`,
-                    transition: 'color 0.2s',
-                    background: 'none',
-                    border: 'none',
+                    background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                    fontFamily: F.sans, fontSize: '0.85rem', color: isActive ? C.text : C.muted,
+                    transition: 'color 0.3s'
                   }}
-                  whileTap={{ scale: 0.94 }}
-                  aria-current={isActive ? 'page' : undefined}
+                  className="hover:text-white"
+                  aria-label={`Navigate to ${item}`}
                 >
-                  {isActive && (
-                    <motion.span
-                      layoutId="nav-pill"
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        borderRadius: 9999,
-                        background: `rgba(212,168,75,0.12)`,
-                        border: `1px solid rgba(212,168,75,0.28)`,
-                      }}
-                      transition={{ type: 'spring', stiffness: 420, damping: 38 }}
-                    />
-                  )}
-                  <span style={{ position: 'relative', zIndex: 1 }}>{item}</span>
-                </motion.button>
+                  {item}
+                </button>
               );
             })}
           </div>
 
-          <div style={{ width: 1, height: 24, background: `rgba(212,168,75,0.22)`, flexShrink: 0, marginLeft: 8 }} />
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '0 8px' }}>
-            {SOCIAL_LINKS.map(({ href, icon: Icon, label }) => (
-              <motion.a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={label}
-                style={{
-                  width: 42,
-                  height: 42,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%',
-                  color: `rgba(196,190,180,0.65)`,
-                  textDecoration: 'none',
-                  border: `1px solid transparent`,
-                  transition: 'all 0.2s',
-                }}
-                whileHover={{ scale: 1.1, color: C.gold, backgroundColor: C.goldDim, borderColor: C.border } as any}
-                whileTap={{ scale: 0.88 }}
-              >
-                <Icon size={19} />
-              </motion.a>
-            ))}
-          </div>
-        </motion.nav>
-      </div>
-
-      <div className="md:hidden fixed top-0 left-0 w-full pointer-events-none" style={{ zIndex: 100, padding: '10px 14px' }}>
-        <motion.div
-          className="pointer-events-auto flex items-center justify-between w-full"
-          style={{ ...glassStyle, borderRadius: 16, height: 60, padding: '0 10px 0 16px' }}
-          initial={{ y: -64, opacity: 0 }}
-          animate={mounted ? { y: 0, opacity: 1 } : {}}
-          transition={{ type: 'spring', stiffness: 280, damping: 30 }}
-        >
-          {/* Mobile: FM monogram only */}
-          <button
-            onClick={() => scrollToId('home')}
-            style={{ display: 'flex', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer' }}
-            aria-label="Go to home"
-          >
-            <div
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: '50%',
-                flexShrink: 0,
-                background: `rgba(212,168,75,0.12)`,
-                border: `1.5px solid rgba(212,168,75,0.35)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button 
+              onClick={onThemeToggle}
+              style={{ background: 'none', border: 'none', color: C.text, padding: '0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
-              <span style={{ fontFamily: F.brand, fontWeight: 900, fontSize: 9, color: C.gold }}>FM</span>
-            </div>
-          </button>
-          <motion.button
-            onClick={() => setMenuOpen((v) => !v)}
-            style={{
-              width: 46,
-              height: 46,
-              borderRadius: 12,
-              flexShrink: 0,
-              background: C.goldDim,
-              border: `1.5px solid ${C.border}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: C.gold,
-              cursor: 'pointer',
-            }}
-            whileTap={{ scale: 0.88 }}
-            aria-expanded={menuOpen}
-            aria-label="Toggle menu"
-          >
-            <motion.div animate={{ rotate: menuOpen ? 90 : 0 }} transition={{ type: 'spring', stiffness: 400, damping: 28 }}>
-              {menuOpen ? <X size={22} /> : <Menu size={22} />}
-            </motion.div>
-          </motion.button>
-        </motion.div>
-      </div>
+              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+
+            <button className="md:hidden" onClick={() => setMenuOpen(true)} style={{ background: 'none', border: 'none', color: C.text, padding: 0 }} aria-label="Open menu">
+              <Menu size={24} strokeWidth={1.5} />
+            </button>
+          </div>
+        </div>
+      </motion.nav>
 
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className="fixed inset-0 md:hidden flex flex-col items-center justify-center"
-            style={{
-              background: `rgba(17,19,24,0.97)`,
-              backdropFilter: 'blur(24px)',
-              zIndex: 99,
-            }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[200] flex flex-col items-center justify-center"
+            style={{ background: `${C.bg}F8` }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4, ease: EASE }}
           >
-            <button
-              className="absolute inset-0"
-              onClick={() => setMenuOpen(false)}
-              aria-label="Close menu"
-              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-            />
-            <div
-              style={{
-                position: 'relative',
-                zIndex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 4,
-              }}
-            >
-              {NAV_LINKS.map((item, i) => {
-                const isActive = active === item.toLowerCase();
-                return (
-                  <motion.button
-                    key={item}
-                    onClick={() => {
-                      setMenuOpen(false);
-                      scrollToId(item.toLowerCase());
-                    }}
-                    style={{
-                      position: 'relative',
-                      display: 'flex',
-                      alignItems: 'center',
-                      fontFamily: F.display,
-                      fontStyle: 'italic',
-                      fontWeight: 400,
-                      fontSize: 'clamp(2rem,8vw,3rem)',
-                      padding: '8px 40px',
-                      letterSpacing: '-0.01em',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: isActive ? C.ivory : `rgba(122,117,104,0.55)`,
-                    }}
-                    initial={{ opacity: 0, y: 24, filter: 'blur(6px)' }}
-                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                    exit={{ opacity: 0, y: -12 }}
-                    transition={{ delay: i * 0.06, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                    whileTap={{ scale: 0.96 }}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    {isActive && (
-                      <motion.span
-                        layoutId="mob-dot"
-                        style={{
-                          position: 'absolute',
-                          left: 12,
-                          top: '50%',
-                          translateY: '-50%',
-                          width: 4,
-                          height: 26,
-                          borderRadius: 9999,
-                          background: C.gold,
-                        }}
-                      />
-                    )}
-                    {item}
-                  </motion.button>
-                );
-              })}
-            </div>
-            <motion.div
-              style={{
-                position: 'relative',
-                zIndex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 16,
-                marginTop: 56,
-              }}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ delay: 0.28 }}
-            >
-              {SOCIAL_LINKS.map(({ href, icon: Icon, label }) => (
-                <motion.a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={label}
-                  style={{
-                    width: 56,
-                    height: 56,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '50%',
-                    background: C.goldDim,
-                    border: `1.5px solid ${C.border}`,
-                    color: C.gold,
-                    textDecoration: 'none',
-                  }}
-                  whileHover={{ scale: 1.1, background: `rgba(212,168,75,0.22)` } as any}
-                  whileTap={{ scale: 0.88 }}
+            <button className="absolute top-8 right-8" onClick={() => setMenuOpen(false)} style={{ background: 'none', border: 'none', color: C.text }} aria-label="Close menu">
+              <X size={32} strokeWidth={1} />
+            </button>
+            <div className="flex flex-col items-center gap-8">
+              {NAV_LINKS.map((item, i) => (
+                <motion.button key={item}
+                  onClick={() => { setMenuOpen(false); scrollToId(item.toLowerCase()); }}
+                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1, duration: 0.6, ease: EASE }}
+                  style={{ fontFamily: F.display, fontSize: '3rem', color: C.text, background: 'none', border: 'none', fontStyle: active === item.toLowerCase() ? 'italic' : 'normal' }}
+                  aria-label={`Navigate to ${item}`}
                 >
-                  <Icon size={24} />
-                </motion.a>
+                  {item}
+                </motion.button>
               ))}
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1778,312 +744,94 @@ const Navbar = memo(({ active }: { active: string }) => {
 });
 Navbar.displayName = 'Navbar';
 
-/* ----------------------------------------------------------------------------
+/* ============================================================================
    PRELOADER
----------------------------------------------------------------------------- */
+============================================================================ */
 const Preloader = ({ onDone }: { onDone: () => void }) => {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    let raf: number;
-    let start: number | null = null;
-    const animate = (timestamp: number) => {
-      if (!start) start = timestamp;
-      const elapsed = timestamp - start;
-      const value = Math.min(100, Math.round((elapsed / 1800) * 100));
-      setProgress(value);
-      if (value < 100) {
-        raf = requestAnimationFrame(animate);
-      } else {
+    let current = 0;
+    const interval = setInterval(() => {
+      current += Math.floor(Math.random() * 15) + 5;
+      if (current >= 100) {
+        current = 100;
+        clearInterval(interval);
         setTimeout(onDone, 600);
       }
-    };
-    raf = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(raf);
+      setProgress(current);
+    }, 150);
+    return () => clearInterval(interval);
   }, [onDone]);
 
+  const C = THEMES.dark;
   return (
-    <motion.div
-      className="fixed inset-0 z-[300] flex flex-col items-center justify-center"
-      style={{ background: C.bg }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.7 }}
-    >
-      {['top-6 left-6 border-t border-l', 'top-6 right-6 border-t border-r', 'bottom-6 left-6 border-b border-l', 'bottom-6 right-6 border-b border-r'].map(
-        (cls, i) => (
-          <motion.div
-            key={i}
-            className={`absolute w-8 h-8 ${cls}`}
-            style={{ borderColor: C.border }}
-            initial={{ opacity: 0, scale: 0.6 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: i * 0.08, duration: 0.5 }}
-          />
-        )
-      )}
-      <motion.div
-        className="flex flex-col items-center gap-6"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="relative flex items-center justify-center" style={{ width: 64, height: 64 }}>
-          <motion.div
-            className="absolute inset-0 rounded-full"
-            style={{ border: `1px solid ${C.border}` }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-          />
-          <span style={{ fontFamily: F.brand, fontWeight: 900, fontSize: 14, color: C.gold, letterSpacing: '-0.02em' }}>FM</span>
-        </div>
-        <span
-          style={{
-            fontFamily: F.brand,
-            fontWeight: 900,
-            fontSize: 'clamp(0.85rem,3vw,1.05rem)',
-            letterSpacing: '0.3em',
-            textTransform: 'uppercase',
-            color: C.ivory,
-          }}
-        >
-          Flynn Maxwel D
+    <motion.div className="fixed inset-0 z-[300] flex items-center justify-center" style={{ background: C.bg }}
+      exit={{ opacity: 0, y: -40 }} transition={{ duration: 0.8, ease: EASE }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+        <span style={{ fontFamily: F.display, fontSize: '4rem', color: C.text, fontStyle: 'italic', fontVariantNumeric: 'tabular-nums' }}>
+          {progress}%
         </span>
-        <div className="rounded-full overflow-hidden" style={{ width: 160, height: 2, background: 'rgba(212,168,75,0.1)' }}>
-          <motion.div
-            className="h-full origin-left rounded-full"
-            style={{
-              background: `linear-gradient(90deg,${C.gold},${C.goldLight})`,
-              scaleX: progress / 100,
-            }}
-          />
-        </div>
-        <span style={{ fontFamily: F.mono, fontSize: 11, letterSpacing: '0.5em', color: C.muted }}>
-          {String(progress).padStart(3, '0')}
-        </span>
-      </motion.div>
+      </div>
     </motion.div>
   );
 };
 
-/* ----------------------------------------------------------------------------
+/* ============================================================================
    MAIN APP
----------------------------------------------------------------------------- */
+============================================================================ */
 export default function App() {
   const [loaded, setLoaded] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
+  const { theme, mounted, toggleTheme, C } = useTheme();
 
   useEffect(() => {
     if (!loaded) return;
-    const sectionIds = ['home', 'about', 'skills', 'projects', 'contact'];
-    const threshold = window.innerWidth < 768 ? 0.18 : 0.28;
-    const observers = sectionIds.map((id) => {
+    const sectionIds = ['home', 'about', 'expertise', 'work', 'contact'];
+    const observers = sectionIds.map(id => {
       const el = document.getElementById(id);
       if (!el) return null;
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) setActiveSection(id);
-        },
-        { threshold }
-      );
+      const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) setActiveSection(id); }, { threshold: 0.3 });
       observer.observe(el);
       return observer;
     });
-    return () => observers.forEach((obs) => obs?.disconnect());
+    return () => observers.forEach(obs => obs?.disconnect());
   }, [loaded]);
 
+  if (!mounted) return null;
+
   return (
-    <div
-      style={{
-        background: C.bg,
-        color: C.ivory,
-        minHeight: '100vh',
-        WebkitFontSmoothing: 'antialiased',
-        MozOsxFontSmoothing: 'grayscale',
-        overflowX: 'hidden',
-        cursor: 'none',
-      }}
-    >
+    <div style={{ background: C.bg, color: C.text, minHeight: '100vh', overflowX: 'hidden', cursor: 'none' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@300;400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap');
         html { scroll-behavior: smooth; }
         * { box-sizing: border-box; }
-        ::-webkit-scrollbar { width: 3px; }
-        ::-webkit-scrollbar-track { background: ${C.bg}; }
-        ::-webkit-scrollbar-thumb { background: rgba(212,168,75,0.28); border-radius: 9999px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(212,168,75,0.45); }
-        ::selection { background: rgba(212,168,75,0.32); color: #f2ede4; }
-        a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
-          outline: 2px solid ${C.gold};
-          outline-offset: 2px;
-        }
+        ::-webkit-scrollbar { width: 0px; }
+        ::selection { background: rgba(255,255,255,0.2); color: #fff; }
+        @media (prefers-color-scheme: light) { ::selection { background: rgba(0,0,0,0.2); color: #000; } }
+        #__next { background: ${C.bg}; }
       `}</style>
 
       <AnimatePresence mode="wait">
         {!loaded && <Preloader key="preloader" onDone={() => setLoaded(true)} />}
       </AnimatePresence>
 
-      {loaded && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          style={{ width: '100%' }}
-        >
-          <Orbs />
-          <Noise />
-          <Cursor />
-          <ScrollProgress />
-          <Navbar active={activeSection} />
+      {loaded && mounted && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.5, ease: EASE }}>
+          <AmbientGlow C={C} />
+          <Cursor C={C} />
+          <Navbar active={activeSection} theme={theme} onThemeToggle={toggleTheme} />
 
-          <main style={{ position: 'relative', zIndex: 10, width: '100%' }}>
-            <section
-              id="home"
-              style={{
-                position: 'relative',
-                overflow: 'hidden',
-                height: '100svh',
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Particles />
-              <div
-                style={{
-                  position: 'relative',
-                  zIndex: 2,
-                  textAlign: 'center',
-                  width: '100%',
-                  padding: '0 clamp(1.25rem,5vw,3rem)',
-                  maxWidth: 940,
-                }}
-              >
-                <HeroText onScroll={() => scrollToId('about')} />
-              </div>
+          <main style={{ position: 'relative', zIndex: 10 }}>
+            <section id="home">
+              <HeroText C={C} />
             </section>
-
-            <section
-              id="about"
-              style={{
-                position: 'relative',
-                overflow: 'hidden',
-                minHeight: '90vh',
-                padding: 'clamp(4rem,10vw,8rem) clamp(1.25rem,6vw,6rem)',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-              }}
-            >
-              <div
-                style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  fontFamily: F.brand,
-                  fontWeight: 900,
-                  fontSize: 'clamp(5rem,26vw,20rem)',
-                  lineHeight: 1,
-                  color: `rgba(212,168,75,0.028)`,
-                  letterSpacing: '-0.04em',
-                  pointerEvents: 'none',
-                  userSelect: 'none',
-                  overflow: 'hidden',
-                }}
-              >
-                01
-              </div>
-              <div
-                className="max-w-6xl mx-auto w-full relative z-10"
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,240px),1fr))',
-                  gap: 'clamp(3rem,7vw,6rem)',
-                  alignItems: 'center',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <Photo />
-                </div>
-                <AboutText />
-              </div>
-            </section>
-
-            <Skills />
-
-            <section
-              id="projects"
-              style={{
-                position: 'relative',
-                overflow: 'hidden',
-                minHeight: '80vh',
-                padding: 'clamp(4rem,10vw,9rem) clamp(1.25rem,6vw,6rem)',
-              }}
-            >
-              <div
-                style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  fontFamily: F.brand,
-                  fontWeight: 900,
-                  fontSize: 'clamp(5rem,26vw,20rem)',
-                  lineHeight: 1,
-                  color: `rgba(212,168,75,0.028)`,
-                  letterSpacing: '-0.04em',
-                  pointerEvents: 'none',
-                  userSelect: 'none',
-                  overflow: 'hidden',
-                }}
-              >
-                02
-              </div>
-              <div className="max-w-6xl mx-auto w-full relative z-10">
-                <motion.div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.85rem',
-                    marginBottom: 'clamp(2rem,6vw,4rem)',
-                  }}
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                >
-                  <span style={{ fontFamily: F.mono, fontSize: 11, color: C.muted }}>[02]</span>
-                  <div style={{ height: 1.5, width: 40, background: `linear-gradient(90deg,${C.gold},transparent)` }} />
-                  <span
-                    style={{
-                      fontFamily: F.mono,
-                      fontSize: 11,
-                      letterSpacing: '0.5em',
-                      textTransform: 'uppercase',
-                      color: C.muted,
-                    }}
-                  >
-                    Archive
-                  </span>
-                </motion.div>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,320px),1fr))',
-                    gap: 'clamp(2.5rem,6vw,5rem)',
-                  }}
-                >
-                  {PROJECTS.map((project, idx) => (
-                    <ProjectCard key={project.id} project={project} index={idx} />
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <Contact />
+            
+            <About C={C} />
+            <Expertise C={C} />
+            <Work C={C} />
+            <Contact C={C} />
           </main>
-
-          <BackToTop />
         </motion.div>
       )}
     </div>
